@@ -9,14 +9,14 @@
 
 ## 2. 실행 환경
 
-- Host OS: macOS [버전 입력]
+- Host OS: macOS
 - Device: iMac
 - Shell: zsh
 - Docker Engine: OrbStack
-- Docker Version: [docker --version 결과 입력]
-- Git Version: [git --version 결과 입력]
-- Working Directory: `/Users/[본인계정명]/codyssey-week1`
-- GitHub Repository: [여기에 저장소 링크 입력]
+- Docker Version: 28.5.2
+- Git Version: 2.53.0
+- Working Directory: `/Users/guswnd0432389/Desktop/ia-codyssey`
+- GitHub Repository: (https://github.com/stnguswnd/ia-codyssey)
 
 ---
 
@@ -29,10 +29,6 @@ codyssey-week1/
 ├─ app/
 │  └─ index.html
 └─ screenshots/
-    ├─ port-8080.png
-    ├─ bind-before.png
-    ├─ bind-after.png
-    └─ vscode-github.png
 ```
 
 ---
@@ -60,7 +56,7 @@ codyssey-week1/
 
 ### 5-1. 절대 경로와 상대 경로
 
-- 절대 경로: `/Users/[본인계정명]/codyssey-week1`
+- 절대 경로: `/Users/guswnd0432389/Desktop/ia-codyssey`
 - 상대 경로: `./app`, `../`, `./screenshots`
 
 절대 경로는 루트부터 시작하는 전체 경로이고, 상대 경로는 현재 위치를 기준으로 해석되는 경로다.
@@ -75,7 +71,20 @@ codyssey-week1/
 - `644` = 소유자 `rw-`, 그룹 `r--`, 기타 사용자 `r--`
 - `755` = 소유자 `rwx`, 그룹 `r-x`, 기타 사용자 `r-x`
 
-일반적으로 파일은 `644`, 디렉토리는 `755` 형태로 많이 사용한다.
+일반적으로 파일은 `644`, 소유자만 읽기/쓰기 가능, 나머지는 읽기만 가능
+디렉토리는 `755` 형태로 많이 사용, 소유자는 읽기/쓰기/실행 가능, 나머지는 읽기/실행 가능
+
+숫자 뜻
+
+4 = 읽기(r)
+2 = 쓰기(w)
+1 = 실행(x)
+
+그래서
+
+6 = 4+2 = rw-
+5 = 4+1 = r-x
+7 = 4+2+1 = rwx
 
 ### 5-3. Git과 GitHub 차이
 
@@ -100,7 +109,7 @@ codyssey-week1/
 #### 실행 명령
 
 ```bash
-mkdir -p ~/codyssey-week1/app ~/codyssey-week1/screenshots
+mkdir -p ./codyssey-week1/app ~/codyssey-week1/screenshots
 cd ~/codyssey-week1
 touch README.md Dockerfile app/index.html
 git init
@@ -319,7 +328,76 @@ docker rm -f stat-test
 #### 실행 결과
 
 ```text
-[여기에 실제 결과 붙여넣기]
+guswnd0432389@c3r4s3 ~ % docker run hello-world
+
+Hello from Docker!
+This message shows that your installation appears to be working correctly.
+
+To generate this message, Docker took the following steps:
+ 1. The Docker client contacted the Docker daemon.
+ 2. The Docker daemon pulled the "hello-world" image from the Docker Hub.
+    (amd64)
+ 3. The Docker daemon created a new container from that image which runs the
+    executable that produces the output you are currently reading.
+ 4. The Docker daemon streamed that output to the Docker client, which sent it
+    to your terminal.
+
+To try something more ambitious, you can run an Ubuntu container with:
+ $ docker run -it ubuntu bash
+
+Share images, automate workflows, and more with a free Docker ID:
+ https://hub.docker.com/
+
+For more examples and ideas, visit:
+ https://docs.docker.com/get-started/
+
+guswnd0432389@c3r4s3 ~ % docker images
+REPOSITORY           TAG       IMAGE ID       CREATED        SIZE
+codyssey-week1-web   1.0       6358d2477bfb   5 hours ago    62.2MB
+nginx                alpine    d5030d429039   6 days ago     62.2MB
+hello-world          latest    e2ac70e7319a   7 days ago     10.1kB
+ubuntu               latest    f794f40ddfff   5 weeks ago    78.1MB
+alpine               latest    a40c03cbb81c   2 months ago   8.44MB
+guswnd0432389@c3r4s3 ~ % docker ps -a
+CONTAINER ID   IMAGE                    COMMAND                  CREATED             STATUS                      PORTS                                     NAMES
+5518d9b24c09   hello-world              "/hello"                 15 seconds ago      Exited (0) 15 seconds ago                                             xenodochial_moore
+4f24e79fc9f9   ubuntu                   "sleep infinity"         45 minutes ago      Up 45 minutes                                                         vol-test2
+44f44b66a293   ubuntu                   "bash"                   About an hour ago   Up About an hour                                                      ubuntu-test
+94000698c879   nginx:alpine             "/docker-entrypoint.…"   2 hours ago         Up 2 hours                  0.0.0.0:8081->80/tcp, [::]:8081->80/tcp   bind-test
+38f14a1f344a   codyssey-week1-web:1.0   "/docker-entrypoint.…"   2 hours ago         Up 2 hours                  0.0.0.0:8080->80/tcp, [::]:8080->80/tcp   week1-web
+0303e003cee4   hello-world              "/hello"                 2 hours ago         Exited (0) 2 hours ago                                                eager_nobel
+3ff3628ceaa0   codyssey-week1-web:1.0   "/docker-entrypoint.…"   4 hours ago         Exited (0) 2 hours ago                                                affectionate_zhukovsky
+d5124d00d2ac   codyssey-week1-web:1.0   "/docker-entrypoint.…"   4 hours ago         Created                                                               lucid_wozniak
+7191eec7147a   alpine                   "sh -c 'echo hello f…"   5 hours ago         Exited (0) 5 hours ago                                                log-test
+e2aa75e607e7   hello-world              "/hello"                 5 hours ago         Exited (0) 5 hours ago                                                zen_carver
+guswnd0432389@c3r4s3 ~ % docker run --name log-test alpine sh -c "echo hello from container"
+docker: Error response from daemon: Conflict. The container name "/log-test" is already in use by container "7191eec7147a6e4580b15aa232302e29ee21c8cb3886df5704294d968596da97". You have to remove (or rename) that container to be able to reuse that name.
+
+Run 'docker run --help' for more information
+guswnd0432389@c3r4s3 ~ % docker rm -f log-test                                                                                                                 
+log-test
+guswnd0432389@c3r4s3 ~ % docker run --name log-test alpine sh -c "echo hello from container"
+hello from container
+guswnd0432389@c3r4s3 ~ % docker logs log-test
+hello from container
+guswnd0432389@c3r4s3 ~ % docker rm -f stat-test
+Error response from daemon: No such container: stat-test
+guswnd0432389@c3r4s3 ~ % docker run -d --name stat-test nginx:alpine
+b3c6c996db6cb85750efdf48aa4f21eade1e7c899c1aaad3ab77bc04cf0e19dc
+guswnd0432389@c3r4s3 ~ % docker ps
+CONTAINER ID   IMAGE                    COMMAND                  CREATED             STATUS             PORTS                                     NAMES
+b3c6c996db6c   nginx:alpine             "/docker-entrypoint.…"   4 seconds ago       Up 3 seconds       80/tcp                                    stat-test
+4f24e79fc9f9   ubuntu                   "sleep infinity"         53 minutes ago      Up 53 minutes                                                vol-test2
+44f44b66a293   ubuntu                   "bash"                   About an hour ago   Up About an hour                                             ubuntu-test
+94000698c879   nginx:alpine             "/docker-entrypoint.…"   2 hours ago         Up 2 hours         0.0.0.0:8081->80/tcp, [::]:8081->80/tcp   bind-test
+38f14a1f344a   codyssey-week1-web:1.0   "/docker-entrypoint.…"   2 hours ago         Up 2 hours         0.0.0.0:8080->80/tcp, [::]:8080->80/tcp   week1-web
+guswnd0432389@c3r4s3 ~ % docker stats --no-stream
+CONTAINER ID   NAME          CPU %     MEM USAGE / LIMIT     MEM %     NET I/O           BLOCK I/O         PIDS
+b3c6c996db6c   stat-test     0.00%     13.78MiB / 15.67GiB   0.09%     830B / 126B       8.75MB / 4.1kB    7
+4f24e79fc9f9   vol-test2     0.00%     96KiB / 15.67GiB      0.00%     1.3kB / 126B      0B / 0B           1
+44f44b66a293   ubuntu-test   0.00%     628KiB / 15.67GiB     0.00%     10.6kB / 2.13kB   27MB / 73.7kB     1
+94000698c879   bind-test     0.00%     5.051MiB / 15.67GiB   0.03%     14kB / 8.08kB     15.6MB / 8.19kB   7
+38f14a1f344a   week1-web     0.00%     5.062MiB / 15.67GiB   0.03%     5.55kB / 2.98kB   13.3MB / 8.19kB   7
 ```
 
 #### 정리
@@ -656,9 +734,6 @@ user.email=xxx@gmail.com
 user.name=xxx
 ```
 
-#### VSCode / GitHub 연동 증거
-
-![vscode-github](./screenshots/vscode-github.png)
 
 #### 정리
 
@@ -674,38 +749,32 @@ user.name=xxx
 |---|---|---|
 | 터미널 기본 조작 | `pwd`, `ls -la`, `mkdir`, `touch`, `cp`, `mv`, `rm`, `cat` | 본 문서 6-2 |
 | 권한 변경 | `chmod 644`, `chmod 755`, `ls -l`, `ls -ld` | 본 문서 6-3 |
-| Docker 점검 | `docker --version`, `docker info` | 본 문서 6-4 |
+| Docker 점검 | `docker --version` | 본 문서 6-4 |
 | Docker 운영 명령 | `docker images`, `docker ps`, `docker ps -a`, `docker logs`, `docker stats --no-stream` | 본 문서 6-5 |
 | 컨테이너 실습 | `docker run hello-world`, `docker run -it ubuntu bash` | 본 문서 6-5, 6-6 |
 | Dockerfile 웹 서버 | `docker build`, `docker run` | 본 문서 6-7 |
-| 포트 매핑 | `curl http://localhost:8080` + 브라우저 캡처 | 본 문서 6-8, `screenshots/port-8080.png` |
-| Bind Mount | 파일 수정 전/후 비교 | 본 문서 6-9, `screenshots/bind-before.png`, `screenshots/bind-after.png` |
+| 포트 매핑 | `curl http://localhost:8080` + 브라우저 캡처 | 본 문서 6-8 |
+| Bind Mount | 파일 수정 전/후 비교 | 본 문서 6-9|
 | Volume 영속성 | 컨테이너 삭제 전/후 같은 파일 조회 | 본 문서 6-10 |
-| Git/GitHub/VSCode | `git config --list`, `git push`, VSCode 캡처 | 본 문서 6-11, `screenshots/vscode-github.png` |
+| Git/GitHub/VSCode | `git config --list`, `git push`, VSCode 캡처 | 본 문서 6-11 |
 
 ---
 
 ## 8. 트러블슈팅
 
-### 문제 1. Docker daemon 연결 실패
+문제 1. 컨테이너 이름 충돌
 
-- 문제 상황: `docker info` 실행 시 Docker daemon 연결 오류 발생
-- 원인 가설: OrbStack이 실행되지 않았거나 Docker Engine이 아직 올라오지 않은 상태
-- 확인 방법: OrbStack 앱 실행 여부 확인 후 `docker info` 재실행
-- 해결 방법: OrbStack을 실행한 뒤 잠시 기다리고 다시 명령을 실행하여 해결
+`docker run --name log-test alpine sh -c "echo hello from container"` 실행 시  
+`The container name "/log-test" is already in use` 오류가 발생했다.
 
-### 문제 2. 포트 충돌 또는 컨테이너 이름 충돌
+해당 명령은 `docker logs` 확인을 위해, 간단한 출력만 남기고 종료되는 테스트용 컨테이너를 생성하려는 목적이었다.  
+하지만 이전에 생성한 `log-test` 컨테이너가 삭제되지 않은 상태로 남아 있어 동일한 이름을 재사용할 수 없었다.
 
-- 문제 상황: `docker run -d --name week1-web -p 8080:80 ...` 실행 시 충돌 발생
-- 원인 가설: 기존에 같은 이름의 컨테이너가 있거나 8080 포트를 다른 프로세스가 사용 중
-- 확인 방법:
-  - `docker ps -a`
-  - `lsof -i :8080`
-- 해결 방법:
-  - 기존 컨테이너 삭제: `docker rm -f week1-web`
-  - 다른 포트 사용: `-p 8082:80`
+문제 확인을 위해 `docker ps -a`를 실행했다.  
+여기서 `ps`는 process status의 줄임말이며, Docker에서는 컨테이너 목록을 확인하는 명령이다.  
+`docker ps`는 실행 중인 컨테이너만 보여주고, `docker ps -a`는 종료된 컨테이너까지 포함해 전체 목록을 보여준다.
 
-> 위 2개는 예시다. 실제 제출 시에는 본인이 직접 겪은 문제/원인/확인/해결 과정으로 바꾸는 것이 가장 좋다.
+기존 `log-test` 컨테이너를 확인한 뒤 `docker rm -f log-test`로 삭제하고 다시 실행하여 해결했다.
 
 ---
 
