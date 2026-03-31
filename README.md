@@ -2,7 +2,7 @@
 
 ## 1. 프로젝트 개요
 
-이번 과제에서는 iMac(macOS) 환경에서 OrbStack을 실행한 뒤, 터미널(CLI) 기반으로 개발 워크스테이션을 구성했다.  
+이번 과제에서는 iMac(macOS) 환경에서 OrbStack을 실행한 뒤, 터미널(CLI) 기반으로 개발 워크스테이션을 구성함. 
 터미널 기본 조작, 권한 변경 실습, Docker 설치/점검, 컨테이너 실행, Dockerfile 기반 커스텀 웹 서버 구축, 포트 매핑 검증, bind mount 반영 확인, volume 영속성 검증, Git/GitHub/VSCode 연동까지 수행했다.
 
 ---
@@ -16,20 +16,44 @@
 - Docker Version: 28.5.2
 - Git Version: 2.53.0
 - Working Directory: `/Users/guswnd0432389/Desktop/ia-codyssey`
-- GitHub Repository: (https://github.com/stnguswnd/ia-codyssey)
+- GitHub Repository: `https://github.com/stnguswnd/ia-codyssey`
 
 ---
 
-## 3. 제출물 구성
+## 3. 제출물 구성 및 구조 설계 기준
 
 ```text
-codyssey-week1/
+ia-codyssey/
 ├─ README.md
 ├─ Dockerfile
 ├─ app/
 │  └─ index.html
 └─ screenshots/
 ```
+
+### 3-1. 구조 설계 기준
+
+- `README.md`  
+  전체 수행 절차, 실행 명령, 결과, 개념 설명, 트러블슈팅을 한 곳에 모으는 **단일 기준 문서(single source of truth)** 로 두었다.
+
+- `Dockerfile`  
+  빌드 명령 `docker build -t codyssey-week1-web:1.0 .` 를 루트에서 바로 실행할 수 있도록 **프로젝트 루트**에 배치했다.  
+  이렇게 하면 build context가 단순해지고, `app/` 폴더를 상대 경로로 바로 참조할 수 있다.
+
+- `app/`  
+  실제 웹 서버가 제공할 정적 파일만 분리했다.  
+  실행 대상 파일과 문서/증빙 파일을 섞지 않기 위해 `index.html` 을 별도 디렉토리로 분리했다.
+
+- `screenshots/`  
+  실행 결과 증빙 이미지를 모으는 폴더다.  
+  런타임 파일(`app/`)과 평가 증빙 파일(`screenshots/`)을 분리해, **서비스 파일과 제출 증거를 역할별로 구분**했다.
+
+### 3-2. 왜 이 구조가 적절한가
+
+- 실행에 필요한 파일과 설명 문서를 분리해 가독성이 좋다.
+- Docker build 시 필요한 파일 위치가 단순해 실수 가능성이 줄어든다.
+- `app/` 은 bind mount 실습에도 그대로 재사용 가능하다.
+- 제출자가 아닌 다른 사람이 저장소를 열어도 폴더 역할을 바로 이해할 수 있다.
 
 ---
 
@@ -52,14 +76,35 @@ codyssey-week1/
 
 ---
 
-## 5. 개념 정리
+## 5. 개념 및 설계 정리
 
 ### 5-1. 절대 경로와 상대 경로
 
 - 절대 경로: `/Users/guswnd0432389/Desktop/ia-codyssey`
-- 상대 경로: `./app`, `../`, `./screenshots`
+- 상대 경로: `./app`, `./screenshots`, `.`
 
-절대 경로는 루트부터 시작하는 전체 경로이고, 상대 경로는 현재 위치를 기준으로 해석되는 경로다.
+절대 경로는 루트(`/`)부터 시작하는 전체 경로이고, 상대 경로는 현재 위치를 기준으로 해석되는 경로다.
+
+#### 어떤 상황에서 무엇을 선택했는가
+
+- **절대 경로를 쓰는 경우**
+  - 현재 내가 어느 위치에 있는지 명확히 확인할 때
+  - 호스트 OS 기준의 실제 위치를 설명해야 할 때
+  - bind mount처럼 **호스트 경로 자체가 중요**한 상황을 설명할 때
+
+- **상대 경로를 쓰는 경우**
+  - 저장소 루트 기준으로 누구나 같은 명령을 재현하게 만들고 싶을 때
+  - 문서 이식성(portability)을 높이고 싶을 때
+  - `docker build -t codyssey-week1-web:1.0 .`, `COPY app/ ...`, `./screenshots/...` 처럼 **프로젝트 내부 리소스**를 참조할 때
+
+#### 판단 기준
+
+- **현재 폴더가 바뀌어도 의미가 유지되어야 하면 절대 경로**
+- **저장소를 통째로 옮겨도 명령이 유지되어야 하면 상대 경로**
+
+즉, 이번 과제에서는  
+경로 개념 설명과 호스트 위치 확인에는 절대 경로를 쓰고,  
+실제 실행 명령과 제출 구조 설명에는 상대 경로를 우선 사용했다.
 
 ### 5-2. 권한 의미 정리
 
@@ -71,34 +116,112 @@ codyssey-week1/
 - `644` = 소유자 `rw-`, 그룹 `r--`, 기타 사용자 `r--`
 - `755` = 소유자 `rwx`, 그룹 `r-x`, 기타 사용자 `r-x`
 
-일반적으로 파일은 `644`, 소유자만 읽기/쓰기 가능, 나머지는 읽기만 가능
-디렉토리는 `755` 형태로 많이 사용, 소유자는 읽기/쓰기/실행 가능, 나머지는 읽기/실행 가능
+숫자 뜻:
+- `4` = 읽기(`r`)
+- `2` = 쓰기(`w`)
+- `1` = 실행(`x`)
 
-숫자 뜻
+그래서:
+- `6 = 4 + 2 = rw-`
+- `5 = 4 + 1 = r-x`
+- `7 = 4 + 2 + 1 = rwx`
 
-4 = 읽기(r)
-2 = 쓰기(w)
-1 = 실행(x)
-
-그래서
-
-6 = 4+2 = rw-
-5 = 4+1 = r-x
-7 = 4+2+1 = rwx
+일반적으로 파일은 `644`, 디렉토리는 `755` 형태를 많이 사용한다.  
+파일은 보통 소유자만 수정하면 충분하고, 디렉토리는 접근을 위해 `x` 권한이 필요하기 때문이다.
 
 ### 5-3. Git과 GitHub 차이
 
 - Git: 로컬 환경에서 버전 이력을 관리하는 도구
 - GitHub: 원격 저장소 및 협업 플랫폼
 
-### 5-4. 포트 매핑이 필요한 이유
+즉, Git은 버전 관리 자체이고, GitHub는 그 이력을 공유하고 백업하는 원격 공간이다.
 
-컨테이너 내부 웹 서버는 컨테이너 안에서만 열려 있기 때문에, 호스트(macOS) 브라우저에서 접근하려면 `-p 호스트포트:컨테이너포트` 형식으로 연결해줘야 한다.
+### 5-4. 이미지(Image)와 컨테이너(Container) 차이
 
-### 5-5. Bind Mount와 Volume 차이
+#### 빌드 관점
 
-- Bind Mount: 호스트의 실제 디렉토리를 컨테이너에 직접 연결
-- Volume: Docker가 관리하는 별도 영속 저장 공간
+- **이미지(Image)** 는 Dockerfile을 기준으로 만들어지는 **불변(immutable) 실행 템플릿**이다.
+- `docker build -t codyssey-week1-web:1.0 .` 의 결과물은 이미지다.
+- 이 시점에는 웹 서버가 아직 실행되지 않는다.
+
+#### 실행 관점
+
+- **컨테이너(Container)** 는 이미지를 실제로 실행한 **런타임 인스턴스**다.
+- `docker run -d --name week1-web -p 8080:80 codyssey-week1-web:1.0` 의 결과는 컨테이너다.
+- 같은 이미지로도 여러 개의 컨테이너를 만들 수 있다.
+
+#### 변경 관점
+
+- 이미지 자체는 빌드 후 그대로 유지된다.
+- 컨테이너는 실행 중 상태, 로그, writable layer 등 **실행 시점의 변화**를 가진다.
+- `app/index.html` 이나 Dockerfile을 바꿨다면 **이미지를 다시 빌드**해야 한다.
+- 반대로 bind mount를 사용하면 컨테이너를 다시 빌드하지 않고도 호스트 파일 수정이 즉시 반영될 수 있다.
+- 컨테이너 내부에만 저장한 데이터는 컨테이너 삭제 시 사라질 수 있으므로, 영속 데이터는 **volume 또는 bind mount** 로 분리해야 한다.
+
+### 5-5. 포트 매핑이 필요한 이유
+
+컨테이너는 호스트와 분리된 **독립 네트워크 네임스페이스(network namespace)** 를 가진다.  
+따라서 컨테이너 내부의 nginx가 `80` 포트에서 듣고 있어도, 그 포트는 기본적으로 **컨테이너 내부에서만 열려 있는 상태**다.
+
+즉,
+- nginx는 컨테이너 안에서 `80` 포트에 바인딩됨
+- 브라우저는 호스트(macOS)의 네트워크로 접속함
+- 따라서 아무 설정이 없으면 호스트의 `localhost:80` 과 컨테이너의 `80` 은 자동으로 연결되지 않음
+
+이때 `-p 8080:80` 을 사용하면,
+- 호스트의 `8080`
+- 컨테이너의 `80`
+
+을 연결해 주는 포트 포워딩/NAT 규칙이 생긴다.
+
+그래서 브라우저에서 `http://localhost:8080` 으로 접속하면,  
+호스트 8080으로 들어온 요청이 컨테이너 내부 nginx 80으로 전달된다.
+
+정리하면, **포트 매핑은 호스트와 컨테이너의 분리된 네트워크를 이어주는 공개 창구**다.
+
+### 5-6. Bind Mount와 Volume 차이
+
+- **Bind Mount**
+  - 호스트의 실제 디렉토리를 컨테이너에 직접 연결
+  - 예: `-v "$(pwd)/app:/usr/share/nginx/html"`
+  - 장점: 호스트 파일 수정이 즉시 반영됨
+  - 적합한 경우: 소스 코드, 설정 파일, 실시간 편집이 필요한 웹 리소스
+
+- **Volume**
+  - Docker가 관리하는 별도 영속 저장 공간
+  - 예: `-v mydata:/data`
+  - 장점: 컨테이너를 삭제해도 데이터 유지가 쉬움
+  - 적합한 경우: DB 데이터, 업로드 파일, 컨테이너 수명과 분리해 보존할 데이터
+
+### 5-7. 재현 가능하도록 설계한 기준
+
+이번 README는 단순히 “한 번 실행했다”는 기록이 아니라, **제3자가 같은 결과를 반복해서 재현할 수 있게** 작성했다.
+
+#### 설계 기준
+
+- **고정된 이미지 태그 사용**  
+  `codyssey-week1-web:1.0` 으로 태그를 고정해, run 시 어떤 이미지를 써야 하는지 모호하지 않게 했다.
+
+- **고정된 컨테이너 이름 사용**  
+  `week1-web`, `bind-test`, `vol-test`, `vol-test2` 처럼 역할이 드러나는 이름을 사용했다.
+
+- **포트 충돌 방지용 분리**
+  - 커스텀 웹 서버: `8080 -> 80`
+  - bind mount 검증: `8081 -> 80`
+
+  같은 nginx 계열 실습이라도 포트를 분리해 충돌 없이 각각 재현할 수 있게 했다.
+
+- **런타임 데이터와 정적 파일의 역할 분리**
+  - 정적 웹 파일: `app/`
+  - 영속 데이터: `mydata` volume
+
+  즉, **코드/정적 자원과 데이터 저장소를 अलग-अलग 관리**하도록 구성했다.
+
+- **검증 명령과 실행 명령을 쌍으로 배치**
+  - 실행: `docker run ...`
+  - 검증: `docker ps`, `curl`, `docker exec`, `docker logs`
+
+  각 단계마다 “실행”과 “확인”을 함께 두어, 재현 과정에서 어느 지점이 실패했는지 바로 파악할 수 있게 했다.
 
 ---
 
@@ -109,7 +232,7 @@ codyssey-week1/
 #### 실행 명령
 
 ```bash
-mkdir -p ./codyssey-week1/app ~/codyssey-week1/screenshots
+mkdir -p ./codyssey-week1/app ./codyssey-week1/screenshots
 cd ~/codyssey-week1
 touch README.md Dockerfile app/index.html
 git init
@@ -133,16 +256,21 @@ hint:
 hint: 	git config --global init.defaultBranch <name>
 hint:
 hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
-`hint: 'development'. The just-created branch can be renamed via this command:
+hint: 'development'. The just-created branch can be renamed via this command:
 hint:
 hint: 	git branch -m <name>
 hint:
-hint: Disable this message with "git config set advice.defaultBranchName false"`
+hint: Disable this message with "git config set advice.defaultBranchName false"
 Initialized empty Git repository in /Users/guswnd0432389/codyssey-week1/.git/
 
 guswnd0432389@c3r4s3 codyssey-week1 % ls
-Dockerfile	README.md	app		screenshots
+Dockerfile    README.md    app    screenshots
 ```
+
+#### 정리
+
+- 프로젝트 루트, 정적 웹 파일 폴더, 캡처 폴더를 먼저 분리했다.
+- 제출용 문서와 실행 대상 파일을 초기에 구조화해 이후 실습이 꼬이지 않도록 했다.
 
 ---
 
@@ -175,11 +303,11 @@ rm -r practice
 #### 실행 결과
 
 ```text
-guswnd0432389@c3r4s3 codyssey-week1 % pwd 
+guswnd0432389@c3r4s3 codyssey-week1 % pwd
 /Users/guswnd0432389/codyssey-week1
 
 guswnd0432389@c3r4s3 codyssey-week1 % ls
-Dockerfile	README.md	app		screenshots
+Dockerfile    README.md    app    screenshots
 
 guswnd0432389@c3r4s3 codyssey-week1 % ls -la
 total 0
@@ -218,10 +346,10 @@ guswnd0432389@c3r4s3 codyssey-week1 % rm -r practice
 
 #### 정리
 
-- `pwd`로 현재 위치 확인
-- `ls`, `ls -la`로 일반 파일/숨김 파일 확인
-- `mkdir`, `touch`, `cp`, `mv`, `rm`으로 기본 파일 조작 수행
-- `cat`으로 파일 내용 확인
+- `pwd` 로 현재 위치 확인
+- `ls`, `ls -la` 로 일반 파일/숨김 파일 확인
+- `mkdir`, `touch`, `cp`, `mv`, `rm` 으로 기본 파일 조작 수행
+- `cat` 으로 파일 내용 확인
 
 ---
 
@@ -246,7 +374,7 @@ ls -ld permdir
 #### 실행 결과
 
 ```text
-uswnd0432389@c3r4s3 ia-codyssey % touch perm.txt
+guswnd0432389@c3r4s3 ia-codyssey % touch perm.txt
 guswnd0432389@c3r4s3 ia-codyssey % mkdir permdir
 
 guswnd0432389@c3r4s3 ia-codyssey % ls -l
@@ -273,15 +401,13 @@ drwxr-xr-x  2 guswnd0432389  guswnd0432389     64 Mar 31 17:22 permdir
 
 guswnd0432389@c3r4s3 ia-codyssey % ls -ld permdir
 drwxr-xr-x  2 guswnd0432389  guswnd0432389  64 Mar 31 17:22 permdir
-
-
 ```
 
 #### 정리
 
-- `perm.txt`에는 `644` 권한 적용
-- `permdir`에는 `755` 권한 적용
-- 파일과 디렉토리는 권한 의미가 다르게 체감됨
+- `perm.txt` 에 `644` 권한 적용
+- `permdir` 에 `755` 권한 적용
+- 파일과 디렉토리는 권한 해석 방식이 다르므로, `ls -l` 과 `ls -ld` 를 구분해 확인했다.
 
 ---
 
@@ -302,8 +428,8 @@ Docker version 28.5.2, build ecc6942
 
 #### 정리
 
-- OrbStack 실행 후 터미널에서 `docker` 명령이 정상 동작함을 확인
-- Docker Engine 연결 상태와 기본 정보 확인
+- OrbStack 실행 후 터미널에서 `docker` 명령이 정상 동작함을 확인했다.
+- Docker Engine 연결 상태와 기본 정보를 점검했다.
 
 ---
 
@@ -345,12 +471,6 @@ To generate this message, Docker took the following steps:
 To try something more ambitious, you can run an Ubuntu container with:
  $ docker run -it ubuntu bash
 
-Share images, automate workflows, and more with a free Docker ID:
- https://hub.docker.com/
-
-For more examples and ideas, visit:
- https://docs.docker.com/get-started/
-
 guswnd0432389@c3r4s3 ~ % docker images
 REPOSITORY           TAG       IMAGE ID       CREATED        SIZE
 codyssey-week1-web   1.0       6358d2477bfb   5 hours ago    62.2MB
@@ -358,6 +478,7 @@ nginx                alpine    d5030d429039   6 days ago     62.2MB
 hello-world          latest    e2ac70e7319a   7 days ago     10.1kB
 ubuntu               latest    f794f40ddfff   5 weeks ago    78.1MB
 alpine               latest    a40c03cbb81c   2 months ago   8.44MB
+
 guswnd0432389@c3r4s3 ~ % docker ps -a
 CONTAINER ID   IMAGE                    COMMAND                  CREATED             STATUS                      PORTS                                     NAMES
 5518d9b24c09   hello-world              "/hello"                 15 seconds ago      Exited (0) 15 seconds ago                                             xenodochial_moore
@@ -370,20 +491,27 @@ CONTAINER ID   IMAGE                    COMMAND                  CREATED        
 d5124d00d2ac   codyssey-week1-web:1.0   "/docker-entrypoint.…"   4 hours ago         Created                                                               lucid_wozniak
 7191eec7147a   alpine                   "sh -c 'echo hello f…"   5 hours ago         Exited (0) 5 hours ago                                                log-test
 e2aa75e607e7   hello-world              "/hello"                 5 hours ago         Exited (0) 5 hours ago                                                zen_carver
+
 guswnd0432389@c3r4s3 ~ % docker run --name log-test alpine sh -c "echo hello from container"
 docker: Error response from daemon: Conflict. The container name "/log-test" is already in use by container "7191eec7147a6e4580b15aa232302e29ee21c8cb3886df5704294d968596da97". You have to remove (or rename) that container to be able to reuse that name.
 
 Run 'docker run --help' for more information
-guswnd0432389@c3r4s3 ~ % docker rm -f log-test                                                                                                                 
+
+guswnd0432389@c3r4s3 ~ % docker rm -f log-test
 log-test
+
 guswnd0432389@c3r4s3 ~ % docker run --name log-test alpine sh -c "echo hello from container"
 hello from container
+
 guswnd0432389@c3r4s3 ~ % docker logs log-test
 hello from container
+
 guswnd0432389@c3r4s3 ~ % docker rm -f stat-test
 Error response from daemon: No such container: stat-test
+
 guswnd0432389@c3r4s3 ~ % docker run -d --name stat-test nginx:alpine
 b3c6c996db6cb85750efdf48aa4f21eade1e7c899c1aaad3ab77bc04cf0e19dc
+
 guswnd0432389@c3r4s3 ~ % docker ps
 CONTAINER ID   IMAGE                    COMMAND                  CREATED             STATUS             PORTS                                     NAMES
 b3c6c996db6c   nginx:alpine             "/docker-entrypoint.…"   4 seconds ago       Up 3 seconds       80/tcp                                    stat-test
@@ -391,6 +519,7 @@ b3c6c996db6c   nginx:alpine             "/docker-entrypoint.…"   4 seconds ago
 44f44b66a293   ubuntu                   "bash"                   About an hour ago   Up About an hour                                             ubuntu-test
 94000698c879   nginx:alpine             "/docker-entrypoint.…"   2 hours ago         Up 2 hours         0.0.0.0:8081->80/tcp, [::]:8081->80/tcp   bind-test
 38f14a1f344a   codyssey-week1-web:1.0   "/docker-entrypoint.…"   2 hours ago         Up 2 hours         0.0.0.0:8080->80/tcp, [::]:8080->80/tcp   week1-web
+
 guswnd0432389@c3r4s3 ~ % docker stats --no-stream
 CONTAINER ID   NAME          CPU %     MEM USAGE / LIMIT     MEM %     NET I/O           BLOCK I/O         PIDS
 b3c6c996db6c   stat-test     0.00%     13.78MiB / 15.67GiB   0.09%     830B / 126B       8.75MB / 4.1kB    7
@@ -402,11 +531,11 @@ b3c6c996db6c   stat-test     0.00%     13.78MiB / 15.67GiB   0.09%     830B / 12
 
 #### 정리
 
-- `hello-world`로 기본 실행 확인
-- `docker images`로 이미지 목록 확인
-- `docker ps`, `docker ps -a`로 컨테이너 상태 확인
-- `docker logs`로 로그 확인
-- `docker stats --no-stream`으로 리소스 사용량 확인
+- `hello-world` 로 Docker 설치/실행 경로를 검증했다.
+- `docker images` 로 로컬 이미지 목록을 확인했다.
+- `docker ps`, `docker ps -a` 로 실행 중/종료된 컨테이너 상태를 구분해 확인했다.
+- `docker logs` 로 컨테이너 로그를 확인했다.
+- `docker stats --no-stream` 으로 실행 중인 컨테이너 리소스 사용량을 점검했다.
 
 ---
 
@@ -434,18 +563,18 @@ exit
 guswnd0432389@c3r4s3 ~ % docker run -it --name ubuntu-test ubuntu bash
 Unable to find image 'ubuntu:latest' locally
 latest: Pulling from library/ubuntu
-817807f3c64e: Pull complete 
+817807f3c64e: Pull complete
 Digest: sha256:186072bba1b2f436cbb91ef2567abca677337cfc786c86e107d25b7072feef0c
 Status: Downloaded newer image for ubuntu:latest
 ```
-![ubuntu_내부](./screenshots/우분투_테스트.png)
 
+![ubuntu_내부](./screenshots/우분투_테스트.png)
 
 #### 정리
 
-- 이미지(Image)는 실행 기반이고, 컨테이너(Container)는 실제 실행 인스턴스다.
+- 이미지는 실행 기반 템플릿이고, 컨테이너는 실제 실행 인스턴스임을 실습으로 확인했다.
 - 컨테이너 내부 파일시스템은 호스트(macOS)와 분리되어 있다.
-- 컨테이너 안에서 생성한 파일은 컨테이너 내부 경로에 존재한다.
+- 컨테이너 안에서 생성한 `/tmp/hello.txt` 는 호스트에 자동으로 나타나지 않는다.
 
 ---
 
@@ -453,7 +582,7 @@ Status: Downloaded newer image for ubuntu:latest
 
 #### 선택한 베이스 이미지
 
-`nginx:alpine`을 선택했다.
+`nginx:alpine` 을 선택했다.
 
 선택 이유:
 - 정적 웹 서버 구성에 적합함
@@ -499,26 +628,22 @@ curl http://localhost:8080
 
 #### 실행 결과
 
-```
+```text
 guswnd0432389@c3r4s3 ia-codyssey % docker build -t codyssey-week1-web:1.0 .
-[+] Building 0.5s (7/7) FINISHED                                                                                                                                                                                                                docker:orbstack
- => [internal] load build definition from Dockerfile                                                                                                                                                                                                       0.1s
- => => transferring dockerfile: 242B                                                                                                                                                                                                                       0.0s
- => [internal] load metadata for docker.io/library/nginx:alpine                                                                                                                                                                                            0.0s
- => [internal] load .dockerignore                                                                                                                                                                                                                          0.1s
- => => transferring context: 2B                                                                                                                                                                                                                            0.0s
- => [internal] load build context                                                                                                                                                                                                                          0.1s
- => => transferring context: 59B                                                                                                                                                                                                                           0.0s
- => [1/2] FROM docker.io/library/nginx:alpine                                                                                                                                                                                                              0.0s
- => CACHED [2/2] COPY app/ /usr/share/nginx/html/                                                                                                                                                                                                          0.0s
- => exporting to image                                                                                                                                                                                                                                     0.0s
- => => exporting layers                                                                                                                                                                                                                                    0.0s
- => => writing image sha256:6358d2477bfb441efe33b59d7c2c7a6886308fc4f7348b6e2f34a3aee5f13d0a                                                                                                                                                               0.0s
- => => naming to docker.io/library/codyssey-week1-web:1.0                                                                                                                                                                                                  0.0s
-
+[+] Building 0.5s (7/7) FINISHED
+ => [internal] load build definition from Dockerfile                                                                 0.1s
+ => [internal] load metadata for docker.io/library/nginx:alpine                                                      0.0s
+ => [internal] load .dockerignore                                                                                    0.1s
+ => [internal] load build context                                                                                    0.1s
+ => [1/2] FROM docker.io/library/nginx:alpine                                                                        0.0s
+ => CACHED [2/2] COPY app/ /usr/share/nginx/html/                                                                    0.0s
+ => exporting to image                                                                                               0.0s
+ => => writing image sha256:6358d2477bfb441efe33b59d7c2c7a6886308fc4f7348b6e2f34a3aee5f13d0a                        0.0s
+ => => naming to docker.io/library/codyssey-week1-web:1.0                                                            0.0s
 
 guswnd0432389@c3r4s3 ia-codyssey % docker run -d --name week1-web -p 8080:80 codyssey-week1-web:1.0
 38f14a1f344a0b2be6ae5ddcc0f390eaa98b4494787907fcb794af608766b3f1
+
 guswnd0432389@c3r4s3 ia-codyssey % docker ps
 CONTAINER ID   IMAGE                    COMMAND                  CREATED         STATUS         PORTS                                     NAMES
 38f14a1f344a   codyssey-week1-web:1.0   "/docker-entrypoint.…"   7 seconds ago   Up 6 seconds   0.0.0.0:8080->80/tcp, [::]:8080->80/tcp   week1-web
@@ -526,25 +651,9 @@ CONTAINER ID   IMAGE                    COMMAND                  CREATED        
 guswnd0432389@c3r4s3 ia-codyssey % docker logs week1-web
 /docker-entrypoint.sh: /docker-entrypoint.d/ is not empty, will attempt to perform configuration
 /docker-entrypoint.sh: Looking for shell scripts in /docker-entrypoint.d/
-/docker-entrypoint.sh: Launching /docker-entrypoint.d/10-listen-on-ipv6-by-default.sh
-10-listen-on-ipv6-by-default.sh: info: Getting the checksum of /etc/nginx/conf.d/default.conf
-10-listen-on-ipv6-by-default.sh: info: Enabled listen on IPv6 in /etc/nginx/conf.d/default.conf
-/docker-entrypoint.sh: Sourcing /docker-entrypoint.d/15-local-resolvers.envsh
-/docker-entrypoint.sh: Launching /docker-entrypoint.d/20-envsubst-on-templates.sh
-/docker-entrypoint.sh: Launching /docker-entrypoint.d/30-tune-worker-processes.sh
-/docker-entrypoint.sh: Configuration complete; ready for start up
-2026/03/31 08:50:39 [notice] 1#1: using the "epoll" event method
+...
 2026/03/31 08:50:39 [notice] 1#1: nginx/1.29.7
-2026/03/31 08:50:39 [notice] 1#1: built by gcc 15.2.0 (Alpine 15.2.0) 
-2026/03/31 08:50:39 [notice] 1#1: OS: Linux 6.17.8-orbstack-00308-g8f9c941121b1
-2026/03/31 08:50:39 [notice] 1#1: getrlimit(RLIMIT_NOFILE): 20480:1048576
 2026/03/31 08:50:39 [notice] 1#1: start worker processes
-2026/03/31 08:50:39 [notice] 1#1: start worker process 30
-2026/03/31 08:50:39 [notice] 1#1: start worker process 31
-2026/03/31 08:50:39 [notice] 1#1: start worker process 32
-2026/03/31 08:50:39 [notice] 1#1: start worker process 33
-2026/03/31 08:50:39 [notice] 1#1: start worker process 34
-2026/03/31 08:50:39 [notice] 1#1: start worker process 35
 
 guswnd0432389@c3r4s3 ia-codyssey % curl http://localhost:8080
 <!DOCTYPE html>
@@ -558,14 +667,14 @@ guswnd0432389@c3r4s3 ia-codyssey % curl http://localhost:8080
     <h1>Hello Codyssey</h1>
     <p>Docker custom web server is working on macOS + OrbStack.</p>
   </body>
-</html>%                                  
+</html>
 ```
 
 #### 정리
 
 - 기존 웹 서버 이미지를 기반으로 커스텀 이미지를 생성했다.
-- `COPY app/ /usr/share/nginx/html/` 로 정적 파일을 컨테이너에 반영했다.
-- 빌드 성공 후 컨테이너 실행까지 확인했다.
+- `COPY app/ /usr/share/nginx/html/` 로 정적 파일을 이미지에 포함시켰다.
+- 빌드 성공 후 컨테이너 실행, 로그 확인, HTTP 응답 확인까지 이어서 검증했다.
 
 ---
 
@@ -580,32 +689,15 @@ curl http://localhost:8080
 
 #### 실행 결과
 
+포트 매핑 결과는 6-7의 `docker ps` 와 `curl` 결과로 확인했다.
+
 ```text
-guswnd0432389@c3r4s3 codyssey-week1 % docker run -p 8080:80 codyssey-week1-web:1.0
+0.0.0.0:8080->80/tcp
+```
 
-/docker-entrypoint.sh: /docker-entrypoint.d/ is not empty, will attempt to perform configuration
-/docker-entrypoint.sh: Looking for shell scripts in /docker-entrypoint.d/
-/docker-entrypoint.sh: Launching /docker-entrypoint.d/10-listen-on-ipv6-by-default.sh
-10-listen-on-ipv6-by-default.sh: info: Getting the checksum of /etc/nginx/conf.d/default.conf
-10-listen-on-ipv6-by-default.sh: info: Enabled listen on IPv6 in /etc/nginx/conf.d/default.conf
-/docker-entrypoint.sh: Sourcing /docker-entrypoint.d/15-local-resolvers.envsh
-/docker-entrypoint.sh: Launching /docker-entrypoint.d/20-envsubst-on-templates.sh
-/docker-entrypoint.sh: Launching /docker-entrypoint.d/30-tune-worker-processes.sh
-/docker-entrypoint.sh: Configuration complete; ready for start up
-2026/03/31 06:52:56 [notice] 1#1: using the "epoll" event method
-2026/03/31 06:52:56 [notice] 1#1: nginx/1.29.7
-2026/03/31 06:52:56 [notice] 1#1: built by gcc 15.2.0 (Alpine 15.2.0) 
-2026/03/31 06:52:56 [notice] 1#1: OS: Linux 6.17.8-orbstack-00308-g8f9c941121b1
-2026/03/31 06:52:56 [notice] 1#1: getrlimit(RLIMIT_NOFILE): 20480:1048576
-2026/03/31 06:52:56 [notice] 1#1: start worker processes
-2026/03/31 06:52:56 [notice] 1#1: start worker process 29
-2026/03/31 06:52:56 [notice] 1#1: start worker process 30
-2026/03/31 06:52:56 [notice] 1#1: start worker process 31
-2026/03/31 06:52:56 [notice] 1#1: start worker process 32
-2026/03/31 06:52:56 [notice] 1#1: start worker process 33
-2026/03/31 06:52:56 [notice] 1#1: start worker process 34
-
-
+```html
+<h1>Hello Codyssey</h1>
+<p>Docker custom web server is working on macOS + OrbStack.</p>
 ```
 
 #### 브라우저 접속 증거
@@ -614,10 +706,18 @@ guswnd0432389@c3r4s3 codyssey-week1 % docker run -p 8080:80 codyssey-week1-web:1
 
 ![port-8080](./screenshots/curl_8080.png)
 
+#### 설계 관점 정리
+
+- 컨테이너 내부 nginx의 기본 포트는 `80` 이므로 컨테이너 포트를 `80` 으로 고정했다.
+- 호스트 포트는 실습 검증용으로 기억하기 쉬운 `8080` 을 사용했다.
+- `week1-web` 이라는 고정된 컨테이너 이름을 사용해 `docker ps`, `docker logs`, `docker rm -f week1-web` 로 후속 조작이 쉽도록 했다.
+- 즉, 포트 매핑은 단순 실행이 아니라, **누가 봐도 재실행 가능한 형태**로 이름/포트/검증 URL을 함께 정한 것이다.
+
 #### 정리
 
-- 호스트 포트 `8080`을 컨테이너 포트 `80`에 연결했다.
+- 호스트 포트 `8080` 을 컨테이너 포트 `80` 에 연결했다.
 - 브라우저와 `curl` 모두에서 접속을 확인했다.
+- 포트 매핑은 호스트 네트워크와 컨테이너 네트워크를 연결하는 필수 단계다.
 
 ---
 
@@ -656,10 +756,19 @@ guswnd0432389@c3r4s3 ia-codyssey % docker run -d --name bind-test -p 8081:80 \
 
 ![bind-after](./screenshots/수정후.png)
 
+#### 설계 관점 정리
+
+- `$(pwd)/app` 는 **호스트의 실제 작업 디렉토리**를 가리킨다.
+- `/usr/share/nginx/html` 은 nginx 기본 웹 루트다.
+- 즉, 호스트의 `app/` 폴더를 컨테이너 웹 루트에 그대로 연결해, 로컬 파일 변경이 즉시 웹 응답으로 이어지도록 설계했다.
+- 포트는 6-8의 웹 서버와 충돌하지 않도록 `8081` 로 분리했다.
+- 이 구성은 “이미지 재빌드 없이 반영되는 개발 방식”을 검증하기 위한 재현 가능한 실험 설계다.
+
 #### 정리
 
 - 호스트의 `app/` 디렉토리를 컨테이너 웹 루트에 직접 연결했다.
 - 호스트 파일 수정 후 컨테이너 내부 웹 페이지에도 즉시 반영되는 것을 확인했다.
+- 정적 파일을 자주 수정하는 개발 단계에서는 bind mount가 특히 유용하다.
 
 ---
 
@@ -684,19 +793,31 @@ docker exec -it vol-test2 bash -lc "cat /data/hello.txt"
 ```text
 guswnd0432389@c3r4s3 ~ % docker volume create mydata
 mydata
+
 guswnd0432389@c3r4s3 ~ % docker run -d --name vol-test -v mydata:/data ubuntu sleep infinity
 a0351093d1a50f7073d11f7ab7dd49a2f1a050decbc352b338dd06f516960928
+
 guswnd0432389@c3r4s3 ~ % docker exec -it vol-test bash -lc "echo hi > /data/hello.txt && cat /data/hello.txt"
 hi
-guswnd0432389@c3r4s3 ~ % docker rm -f vol-test 
+
+guswnd0432389@c3r4s3 ~ % docker rm -f vol-test
 vol-test
+
 guswnd0432389@c3r4s3 ~ % docker run -d --name vol-test2 -v mydata:/data ubuntu sleep infinity
 4f24e79fc9f9e59378946db1cefefd01678ca7837c5ebb43b57d5e72fb24cd89
+
 guswnd0432389@c3r4s3 ~ % docker exec -it vol-test2 bash -lc "cat /data/hello.txt"
 hi
-
 ```
+
 ![볼륨_확인](./screenshots/볼륨_생성_예제.png)
+
+#### 설계 관점 정리
+
+- 볼륨 이름을 `mydata` 로 명시해 컨테이너 생명주기와 분리된 저장소임을 드러냈다.
+- 첫 번째 컨테이너(`vol-test`)와 두 번째 컨테이너(`vol-test2`) 모두 같은 `/data` 경로로 연결해 비교 조건을 동일하게 맞췄다.
+- 컨테이너는 삭제했지만, 볼륨은 삭제하지 않았기 때문에 두 번째 컨테이너에서 같은 파일을 다시 읽을 수 있었다.
+- 즉, 이 실습은 “컨테이너 삭제”와 “데이터 삭제”가 같은 의미가 아님을 재현 가능한 방식으로 검증한다.
 
 #### 정리
 
@@ -720,61 +841,212 @@ git config --list
 git add .
 git commit -m "feat: complete codyssey week1"
 
-git remote add origin [여기에 GitHub 저장소 주소]
+git remote add origin [GitHub 저장소 주소]
 git push -u origin main
 ```
 
 #### 실행 결과
 
 ```text
-guswnd0432389@c3r4s3 ~ % git config list
+guswnd0432389@c3r4s3 ~ % git config --list
 credential.helper=osxkeychain
-user.emaul=xxx@gmail.com
 user.email=xxx@gmail.com
 user.name=xxx
+init.defaultbranch=main
 ```
-
 
 #### 정리
 
-- Git 사용자 정보 및 기본 브랜치를 설정했다.
+- Git 사용자 정보와 기본 브랜치를 설정했다.
 - 로컬 저장소를 GitHub 원격 저장소와 연결했다.
-- VSCode에서 GitHub 로그인 및 저장소 연동 상태를 확인했다.
+- `git push` 를 통해 원격 저장소 반영까지 확인했다.
+- VSCode에서도 동일 저장소를 열어 버전 관리 상태를 확인할 수 있다.
 
 ---
 
-## 7. 검증 방법 요약
+## 7. 재현 순서 요약
 
-| 항목 | 검증 명령 / 방법 | 증거 위치 |
-|---|---|---|
-| 터미널 기본 조작 | `pwd`, `ls -la`, `mkdir`, `touch`, `cp`, `mv`, `rm`, `cat` | 본 문서 6-2 |
-| 권한 변경 | `chmod 644`, `chmod 755`, `ls -l`, `ls -ld` | 본 문서 6-3 |
-| Docker 점검 | `docker --version` | 본 문서 6-4 |
-| Docker 운영 명령 | `docker images`, `docker ps`, `docker ps -a`, `docker logs`, `docker stats --no-stream` | 본 문서 6-5 |
-| 컨테이너 실습 | `docker run hello-world`, `docker run -it ubuntu bash` | 본 문서 6-5, 6-6 |
-| Dockerfile 웹 서버 | `docker build`, `docker run` | 본 문서 6-7 |
-| 포트 매핑 | `curl http://localhost:8080` + 브라우저 캡처 | 본 문서 6-8 |
-| Bind Mount | 파일 수정 전/후 비교 | 본 문서 6-9|
-| Volume 영속성 | 컨테이너 삭제 전/후 같은 파일 조회 | 본 문서 6-10 |
-| Git/GitHub/VSCode | `git config --list`, `git push`, VSCode 캡처 | 본 문서 6-11 |
+아래 순서는 **제3자가 같은 결과를 다시 검증하기 위한 최소 재현 시나리오**다.
+
+### 7-1. 커스텀 웹 서버 빌드 및 실행
+
+```bash
+docker build -t codyssey-week1-web:1.0 .
+docker rm -f week1-web 2>/dev/null || true
+docker run -d --name week1-web -p 8080:80 codyssey-week1-web:1.0
+docker ps
+curl http://localhost:8080
+```
+
+### 7-2. Bind Mount 검증
+
+```bash
+docker rm -f bind-test 2>/dev/null || true
+docker run -d --name bind-test -p 8081:80 \
+  -v "$(pwd)/app:/usr/share/nginx/html" \
+  nginx:alpine
+
+curl http://localhost:8081
+# 이후 app/index.html 수정
+curl http://localhost:8081
+```
+
+### 7-3. Volume 영속성 검증
+
+```bash
+docker volume create mydata
+docker rm -f vol-test vol-test2 2>/dev/null || true
+
+docker run -d --name vol-test -v mydata:/data ubuntu sleep infinity
+docker exec -it vol-test bash -lc "echo hi > /data/hello.txt && cat /data/hello.txt"
+docker rm -f vol-test
+
+docker run -d --name vol-test2 -v mydata:/data ubuntu sleep infinity
+docker exec -it vol-test2 bash -lc "cat /data/hello.txt"
+```
+
+### 7-4. 검증 포인트
+
+- 이미지가 존재하는지: `docker images`
+- 컨테이너가 실행 중인지: `docker ps`
+- 포트가 연결되었는지: `0.0.0.0:8080->80/tcp`, `0.0.0.0:8081->80/tcp`
+- 웹 응답이 정상인지: `curl http://localhost:8080`, `curl http://localhost:8081`
+- 데이터가 남아 있는지: `cat /data/hello.txt`
 
 ---
 
-## 8. 트러블슈팅
+## 8. 트러블슈팅 및 심층 인터뷰 답변
 
-문제 1. 컨테이너 이름 충돌
+### 8-1. 문제 1: 컨테이너 이름 충돌
 
 `docker run --name log-test alpine sh -c "echo hello from container"` 실행 시  
 `The container name "/log-test" is already in use` 오류가 발생했다.
 
-해당 명령은 `docker logs` 확인을 위해, 간단한 출력만 남기고 종료되는 테스트용 컨테이너를 생성하려는 목적이었다.  
-하지만 이전에 생성한 `log-test` 컨테이너가 삭제되지 않은 상태로 남아 있어 동일한 이름을 재사용할 수 없었다.
+#### 원인
 
-문제 확인을 위해 `docker ps -a`를 실행했다.  
-여기서 `ps`는 process status의 줄임말이며, Docker에서는 컨테이너 목록을 확인하는 명령이다.  
-`docker ps`는 실행 중인 컨테이너만 보여주고, `docker ps -a`는 종료된 컨테이너까지 포함해 전체 목록을 보여준다.
+이전 실습에서 생성한 `log-test` 컨테이너가 삭제되지 않은 상태였다.  
+Docker는 동일한 이름의 컨테이너를 동시에 둘 수 없으므로 새 컨테이너 생성이 거부되었다.
 
-기존 `log-test` 컨테이너를 확인한 뒤 `docker rm -f log-test`로 삭제하고 다시 실행하여 해결했다.
+#### 확인
+
+```bash
+docker ps -a
+```
+
+- `docker ps`: 실행 중 컨테이너만 확인
+- `docker ps -a`: 종료된 컨테이너까지 포함해 전체 확인
+
+#### 해결
+
+```bash
+docker rm -f log-test
+docker run --name log-test alpine sh -c "echo hello from container"
+```
+
+#### 배운 점
+
+컨테이너 이름은 사람이 후속 명령(`logs`, `exec`, `rm`)을 쓰기 쉽게 해주지만,  
+반대로 재실행 시에는 충돌 지점이 되므로 **조회 → 정리 → 재실행** 순서가 중요하다.
+
+---
+
+### 8-2. 심층 인터뷰 문항 1: 포트 충돌 진단 순서
+
+포트 충돌이 발생했을 때는 아래 순서로 진단하는 것이 가장 빠르다.
+
+#### 1) 먼저 어떤 포트가 문제인지 확인
+
+예를 들어 `8080` 충돌이라면:
+
+```bash
+docker ps
+lsof -iTCP:8080 -sTCP:LISTEN
+```
+
+- `docker ps`: 이미 같은 포트를 쓰는 컨테이너가 있는지 확인
+- `lsof -iTCP:8080 -sTCP:LISTEN`: macOS 기준으로 호스트 프로세스가 해당 포트를 점유 중인지 확인
+
+#### 2) 충돌 주체가 컨테이너인지 호스트 프로세스인지 구분
+
+- 컨테이너가 점유 중이면: `docker rm -f [컨테이너명]` 또는 다른 호스트 포트 사용
+- 호스트 앱이 점유 중이면: 해당 프로세스를 종료하거나 다른 포트로 매핑
+
+#### 3) 컨테이너 포트와 호스트 포트를 구분해서 생각
+
+- 컨테이너 안 포트는 서비스가 실제로 듣는 포트
+- 호스트 포트는 외부에서 접속할 때 쓰는 포트
+
+즉, `-p 8081:80` 처럼 **호스트 포트만 바꾸는 것**으로도 충돌을 회피할 수 있다.
+
+#### 실제 이번 과제에서의 적용
+
+- 기본 웹 서버 검증은 `8080 -> 80`
+- bind mount 검증은 `8081 -> 80`
+
+으로 분리해 두 실습이 서로 충돌하지 않도록 했다.
+
+---
+
+### 8-3. 심층 인터뷰 문항 2: 컨테이너 삭제 시 데이터 소실 방지 대안
+
+컨테이너 삭제 시 데이터 소실을 막으려면, **데이터를 컨테이너 밖으로 분리**해야 한다.
+
+#### 대안 1) Named Volume 사용
+
+```bash
+-v mydata:/data
+```
+
+- 컨테이너 삭제 후에도 데이터 유지 가능
+- DB, 업로드 파일, 애플리케이션 상태 저장에 적합
+
+#### 대안 2) Bind Mount 사용
+
+```bash
+-v "$(pwd)/app:/usr/share/nginx/html"
+```
+
+- 호스트 파일을 직접 사용
+- 코드, 설정 파일, 정적 웹 리소스처럼 사람이 직접 수정하는 파일에 적합
+
+#### 대안 3) 백업/복사
+
+- `docker cp`
+- volume 백업용 tar 저장
+- Git 관리 대상 파일은 저장소에 커밋
+
+#### 이번 과제 기준 판단
+
+- 정적 웹 파일은 사람이 편집해야 하므로 **bind mount**
+- 컨테이너 삭제 후에도 유지해야 하는 데이터는 **volume**
+
+즉, 데이터 특성에 따라 **수정 중심인지 / 영속성 중심인지**를 먼저 구분하는 것이 중요하다.
+
+---
+
+### 8-4. 심층 인터뷰 문항 3: 가장 어려웠던 지점과 해결 과정
+
+가장 헷갈렸던 부분은 **이미지 태그, 컨테이너 실행 포트, 마운트 경로를 각각 다르게 이해해야 한다는 점**이었다.
+
+#### 실제로 겪은 혼란
+
+- `docker run` 시 잘못된 태그(`codyssey-week1-web:1.`)로 실행하려고 해서 로컬 이미지를 못 찾는 문제가 있었다.
+- nginx 기반 이미지인데 컨테이너 내부 포트를 `8080` 으로 착각하면 `8080:8080` 과 같이 잘못 매핑할 수 있었다.
+- bind mount 문법 `-v "$(pwd)/app:/usr/share/nginx/html"` 도 처음에는 “무엇이 호스트 경로이고 무엇이 컨테이너 경로인지”가 헷갈렸다.
+
+#### 해결 과정
+
+1. `docker images` 로 **실제 존재하는 이미지 이름과 태그**를 먼저 확인했다.  
+2. nginx 기본 웹 포트가 `80` 이라는 점을 기준으로 `-p 8080:80` 으로 수정했다.  
+3. `호스트경로:컨테이너경로` 규칙에 따라 bind mount 문법을 다시 해석했다.  
+4. 실행 후에는 `docker ps`, `curl`, `docker exec` 같은 검증 명령으로 결과를 즉시 확인했다.
+
+#### 배운 점
+
+Docker 명령은 한 줄로 보여도, 실제로는  
+**이미지 식별**, **컨테이너 실행 옵션**, **네트워크 연결**, **스토리지 연결**이 동시에 들어간다.  
+그래서 문제를 한꺼번에 보지 말고,  
+**태그 → 포트 → 볼륨/마운트 → 검증 명령** 순서로 쪼개서 보는 습관이 중요하다는 점을 배웠다.
 
 ---
 
@@ -788,5 +1060,15 @@ user.name=xxx
 
 ## 10. 최종 정리
 
-이번 과제를 통해 macOS(iMac) 환경에서 OrbStack 기반 Docker 사용법과 터미널 기본 조작, 권한 개념, 컨테이너와 이미지의 차이, Dockerfile을 통한 커스텀 이미지 제작, 포트 매핑, Bind Mount, Volume 영속성, Git/GitHub 연동 흐름을 직접 실습했다.  
-특히 README만 보더라도 수행 절차와 결과를 재현할 수 있도록 명령어, 출력 결과, 캡처, 설명을 함께 정리했다.
+이번 과제를 통해 macOS(iMac) 환경에서 OrbStack 기반 Docker 사용법과 터미널 기본 조작, 권한 개념, 컨테이너와 이미지의 차이, Dockerfile을 통한 커스텀 이미지 제작, 포트 매핑, Bind Mount, Volume 영속성, Git/GitHub 연동 흐름을 직접 실습했다.
+
+특히 이번 수정본에서는 다음 항목을 명확히 보강했다.
+
+- 프로젝트 디렉토리 구조를 **왜 그렇게 설계했는지**
+- 포트/볼륨 매핑을 **어떻게 재현 가능하게 정리했는지**
+- 이미지와 컨테이너를 **빌드/실행/변경 관점에서 어떻게 구분하는지**
+- 포트 매핑이 왜 필요한지에 대한 **네트워크 구조적 이유**
+- 절대 경로와 상대 경로를 **실제 작업에서 어떤 기준으로 선택하는지**
+- 포트 충돌, 데이터 보존, 어려웠던 지점에 대한 **심층 인터뷰형 답변**
+
+즉, README만 보더라도 수행 절차, 결과, 개념 설명, 설계 판단, 재현 방법, 인터뷰 대응 포인트까지 한 번에 확인할 수 있도록 정리했다.
