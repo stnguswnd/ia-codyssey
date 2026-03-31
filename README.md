@@ -237,7 +237,35 @@ ls -ld permdir
 #### 실행 결과
 
 ```text
-[여기에 실제 결과 붙여넣기]
+uswnd0432389@c3r4s3 ia-codyssey % touch perm.txt
+guswnd0432389@c3r4s3 ia-codyssey % mkdir permdir
+
+guswnd0432389@c3r4s3 ia-codyssey % ls -l
+total 48
+-rw-r--r--  1 guswnd0432389  guswnd0432389    203 Mar 31 14:35 Dockerfile
+-rw-r--r--@ 1 guswnd0432389  guswnd0432389  16954 Mar 31 15:53 README.md
+drwxr-xr-x  3 guswnd0432389  guswnd0432389     96 Mar 31 14:35 app
+-rw-r--r--  1 guswnd0432389  guswnd0432389      0 Mar 31 17:22 perm.txt
+drwxr-xr-x  2 guswnd0432389  guswnd0432389     64 Mar 31 17:22 permdir
+
+guswnd0432389@c3r4s3 ia-codyssey % ls -ld permdir
+drwxr-xr-x  2 guswnd0432389  guswnd0432389  64 Mar 31 17:22 permdir
+
+guswnd0432389@c3r4s3 ia-codyssey % chmod 644 perm.txt
+guswnd0432389@c3r4s3 ia-codyssey % chmod 755 permdir
+
+guswnd0432389@c3r4s3 ia-codyssey % ls -l
+total 48
+-rw-r--r--  1 guswnd0432389  guswnd0432389    203 Mar 31 14:35 Dockerfile
+-rw-r--r--@ 1 guswnd0432389  guswnd0432389  16954 Mar 31 15:53 README.md
+drwxr-xr-x  3 guswnd0432389  guswnd0432389     96 Mar 31 14:35 app
+-rw-r--r--  1 guswnd0432389  guswnd0432389      0 Mar 31 17:22 perm.txt
+drwxr-xr-x  2 guswnd0432389  guswnd0432389     64 Mar 31 17:22 permdir
+
+guswnd0432389@c3r4s3 ia-codyssey % ls -ld permdir
+drwxr-xr-x  2 guswnd0432389  guswnd0432389  64 Mar 31 17:22 permdir
+
+
 ```
 
 #### 정리
@@ -254,13 +282,13 @@ ls -ld permdir
 
 ```bash
 docker --version
-docker info
 ```
 
 #### 실행 결과
 
 ```text
-[여기에 실제 결과 붙여넣기]
+guswnd0432389@c3r4s3 ~ % docker --version
+Docker version 28.5.2, build ecc6942
 ```
 
 #### 정리
@@ -325,8 +353,15 @@ exit
 #### 실행 결과
 
 ```text
-[여기에 실제 결과 붙여넣기]
+guswnd0432389@c3r4s3 ~ % docker run -it --name ubuntu-test ubuntu bash
+Unable to find image 'ubuntu:latest' locally
+latest: Pulling from library/ubuntu
+817807f3c64e: Pull complete 
+Digest: sha256:186072bba1b2f436cbb91ef2567abca677337cfc786c86e107d25b7072feef0c
+Status: Downloaded newer image for ubuntu:latest
 ```
+![ubuntu_내부](./screenshots/우분투_테스트.png)
+
 
 #### 정리
 
@@ -386,8 +421,66 @@ curl http://localhost:8080
 
 #### 실행 결과
 
-```text
-[여기에 실제 결과 붙여넣기]
+```
+guswnd0432389@c3r4s3 ia-codyssey % docker build -t codyssey-week1-web:1.0 .
+[+] Building 0.5s (7/7) FINISHED                                                                                                                                                                                                                docker:orbstack
+ => [internal] load build definition from Dockerfile                                                                                                                                                                                                       0.1s
+ => => transferring dockerfile: 242B                                                                                                                                                                                                                       0.0s
+ => [internal] load metadata for docker.io/library/nginx:alpine                                                                                                                                                                                            0.0s
+ => [internal] load .dockerignore                                                                                                                                                                                                                          0.1s
+ => => transferring context: 2B                                                                                                                                                                                                                            0.0s
+ => [internal] load build context                                                                                                                                                                                                                          0.1s
+ => => transferring context: 59B                                                                                                                                                                                                                           0.0s
+ => [1/2] FROM docker.io/library/nginx:alpine                                                                                                                                                                                                              0.0s
+ => CACHED [2/2] COPY app/ /usr/share/nginx/html/                                                                                                                                                                                                          0.0s
+ => exporting to image                                                                                                                                                                                                                                     0.0s
+ => => exporting layers                                                                                                                                                                                                                                    0.0s
+ => => writing image sha256:6358d2477bfb441efe33b59d7c2c7a6886308fc4f7348b6e2f34a3aee5f13d0a                                                                                                                                                               0.0s
+ => => naming to docker.io/library/codyssey-week1-web:1.0                                                                                                                                                                                                  0.0s
+
+
+guswnd0432389@c3r4s3 ia-codyssey % docker run -d --name week1-web -p 8080:80 codyssey-week1-web:1.0
+38f14a1f344a0b2be6ae5ddcc0f390eaa98b4494787907fcb794af608766b3f1
+guswnd0432389@c3r4s3 ia-codyssey % docker ps
+CONTAINER ID   IMAGE                    COMMAND                  CREATED         STATUS         PORTS                                     NAMES
+38f14a1f344a   codyssey-week1-web:1.0   "/docker-entrypoint.…"   7 seconds ago   Up 6 seconds   0.0.0.0:8080->80/tcp, [::]:8080->80/tcp   week1-web
+
+guswnd0432389@c3r4s3 ia-codyssey % docker logs week1-web
+/docker-entrypoint.sh: /docker-entrypoint.d/ is not empty, will attempt to perform configuration
+/docker-entrypoint.sh: Looking for shell scripts in /docker-entrypoint.d/
+/docker-entrypoint.sh: Launching /docker-entrypoint.d/10-listen-on-ipv6-by-default.sh
+10-listen-on-ipv6-by-default.sh: info: Getting the checksum of /etc/nginx/conf.d/default.conf
+10-listen-on-ipv6-by-default.sh: info: Enabled listen on IPv6 in /etc/nginx/conf.d/default.conf
+/docker-entrypoint.sh: Sourcing /docker-entrypoint.d/15-local-resolvers.envsh
+/docker-entrypoint.sh: Launching /docker-entrypoint.d/20-envsubst-on-templates.sh
+/docker-entrypoint.sh: Launching /docker-entrypoint.d/30-tune-worker-processes.sh
+/docker-entrypoint.sh: Configuration complete; ready for start up
+2026/03/31 08:50:39 [notice] 1#1: using the "epoll" event method
+2026/03/31 08:50:39 [notice] 1#1: nginx/1.29.7
+2026/03/31 08:50:39 [notice] 1#1: built by gcc 15.2.0 (Alpine 15.2.0) 
+2026/03/31 08:50:39 [notice] 1#1: OS: Linux 6.17.8-orbstack-00308-g8f9c941121b1
+2026/03/31 08:50:39 [notice] 1#1: getrlimit(RLIMIT_NOFILE): 20480:1048576
+2026/03/31 08:50:39 [notice] 1#1: start worker processes
+2026/03/31 08:50:39 [notice] 1#1: start worker process 30
+2026/03/31 08:50:39 [notice] 1#1: start worker process 31
+2026/03/31 08:50:39 [notice] 1#1: start worker process 32
+2026/03/31 08:50:39 [notice] 1#1: start worker process 33
+2026/03/31 08:50:39 [notice] 1#1: start worker process 34
+2026/03/31 08:50:39 [notice] 1#1: start worker process 35
+
+guswnd0432389@c3r4s3 ia-codyssey % curl http://localhost:8080
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Codyssey Week 1</title>
+  </head>
+  <body>
+    <h1>Hello Codyssey</h1>
+    <p>Docker custom web server is working on macOS + OrbStack.</p>
+  </body>
+</html>%                                  
 ```
 
 #### 정리
@@ -411,6 +504,7 @@ curl http://localhost:8080
 
 ```text
 guswnd0432389@c3r4s3 codyssey-week1 % docker run -p 8080:80 codyssey-week1-web:1.0
+
 /docker-entrypoint.sh: /docker-entrypoint.d/ is not empty, will attempt to perform configuration
 /docker-entrypoint.sh: Looking for shell scripts in /docker-entrypoint.d/
 /docker-entrypoint.sh: Launching /docker-entrypoint.d/10-listen-on-ipv6-by-default.sh
@@ -440,7 +534,7 @@ guswnd0432389@c3r4s3 codyssey-week1 % docker run -p 8080:80 codyssey-week1-web:1
 
 주소창이 보이도록 브라우저에서 `http://localhost:8080` 접속 후 캡처했다.
 
-![port-8080](./screenshots/port-8080.png)
+![port-8080](./screenshots/curl_8080.png)
 
 #### 정리
 
@@ -470,16 +564,19 @@ curl http://localhost:8081
 #### 실행 결과
 
 ```text
-[여기에 실제 결과 붙여넣기]
+guswnd0432389@c3r4s3 ia-codyssey % docker run -d --name bind-test -p 8081:80 \
+  -v "$(pwd)/app:/usr/share/nginx/html" \
+  nginx:alpine
+94000698c8797bfc248ae4dcec33bdc083e05ad65bbc6a2154d55eaa4c0622da
 ```
 
 #### 수정 전 캡처
 
-![bind-before](./screenshots/bind-before.png)
+![bind-before](./screenshots/수정전.png)
 
 #### 수정 후 캡처
 
-![bind-after](./screenshots/bind-after.png)
+![bind-after](./screenshots/수정후.png)
 
 #### 정리
 
@@ -507,8 +604,21 @@ docker exec -it vol-test2 bash -lc "cat /data/hello.txt"
 #### 실행 결과
 
 ```text
-[여기에 실제 결과 붙여넣기]
+guswnd0432389@c3r4s3 ~ % docker volume create mydata
+mydata
+guswnd0432389@c3r4s3 ~ % docker run -d --name vol-test -v mydata:/data ubuntu sleep infinity
+a0351093d1a50f7073d11f7ab7dd49a2f1a050decbc352b338dd06f516960928
+guswnd0432389@c3r4s3 ~ % docker exec -it vol-test bash -lc "echo hi > /data/hello.txt && cat /data/hello.txt"
+hi
+guswnd0432389@c3r4s3 ~ % docker rm -f vol-test 
+vol-test
+guswnd0432389@c3r4s3 ~ % docker run -d --name vol-test2 -v mydata:/data ubuntu sleep infinity
+4f24e79fc9f9e59378946db1cefefd01678ca7837c5ebb43b57d5e72fb24cd89
+guswnd0432389@c3r4s3 ~ % docker exec -it vol-test2 bash -lc "cat /data/hello.txt"
+hi
+
 ```
+![볼륨_확인](./screenshots/볼륨_생성_예제.png)
 
 #### 정리
 
@@ -539,7 +649,11 @@ git push -u origin main
 #### 실행 결과
 
 ```text
-[여기에 실제 결과 붙여넣기]
+guswnd0432389@c3r4s3 ~ % git config list
+credential.helper=osxkeychain
+user.emaul=xxx@gmail.com
+user.email=xxx@gmail.com
+user.name=xxx
 ```
 
 #### VSCode / GitHub 연동 증거
