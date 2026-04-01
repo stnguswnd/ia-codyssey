@@ -308,7 +308,7 @@ mv b.txt dir1/c.txt
 
 ls -la
 cd ..
-rm -r practice
+rm -r practice    (r은 recursive로 폴더 안을 모두 삭제)
 ```
 
 #### 실행 결과
@@ -793,7 +793,7 @@ docker volume create mydata
 docker run -d --name vol-test -v mydata:/data ubuntu sleep infinity
 docker exec -it vol-test bash -lc "echo hi > /data/hello.txt && cat /data/hello.txt"
 
-docker rm -f vol-test
+docker rm -f vol-test   (f는 force의 약자로 실행중인 컨테이너도 강제로 종료한 뒤 삭제, 만약 안쓴다면 docker stop vol-test후 docker rm vol-test로 삭제해야함) 
 
 docker run -d --name vol-test2 -v mydata:/data ubuntu sleep infinity
 docker exec -it vol-test2 bash -lc "cat /data/hello.txt"
@@ -839,10 +839,6 @@ hi
 
 ---
 
-###
-### 6-11. 보너스 과제 (선택)
-
-````md
 ### 6-11. 보너스 과제 (선택)
 
 #### 6-11-1. Docker Compose 기초
@@ -1008,11 +1004,22 @@ HOST_PORT=8081
 * 서비스 목적에 따라 `build`, `ports`, `volumes`, `.env`를 어떻게 조합할지 설계하는 것이 중요하다.
 
 ---
-
 #### 6-11-6. GitHub SSH 키 설정
 
-GitHub에 HTTPS 대신 SSH 방식으로 접근하면 인증 정보를 반복 입력하지 않고 원격 저장소를 사용할 수 있다.
-SSH 키를 생성하고 GitHub 계정에 공개 키를 등록하면 `git push`, `git pull`을 보다 편리하게 수행할 수 있다.
+GitHub 원격 저장소에 접근할 때 HTTPS 방식은 `push`, `pull` 등 작업 시 계정 인증이나 토큰 입력이 필요한 경우가 있다.
+반면 SSH 방식은 로컬 PC에 SSH 키 쌍(공개 키, 개인 키)을 생성하고, GitHub 계정에 공개 키를 등록하면 해당 PC를 신뢰된 장치처럼 사용할 수 있어 반복 인증 없이 원격 저장소를 다룰 수 있다.
+
+이번 실습에서는 `ed25519` 방식으로 SSH 키를 생성하고, 공개 키를 확인한 뒤 GitHub 계정에 등록하는 흐름을 익혔다.
+이후 `ssh -T git@github.com` 명령으로 GitHub와 SSH 연결이 정상적으로 되는지 테스트하고, 현재 저장소의 원격 주소(`git remote -v`)가 HTTPS인지 SSH인지도 함께 확인했다.
+
+특히 SSH 설정은 단순히 키를 만드는 것에서 끝나는 것이 아니라,
+
+1. 키 생성
+2. 공개 키 확인 및 GitHub 등록
+3. SSH 연결 테스트
+4. 원격 저장소 주소 확인 및 필요 시 SSH 주소로 변경
+
+까지 이어져야 실제 `git push`, `git pull`에 활용할 수 있다는 점을 이해했다.
 
 #### 관련 명령 예시
 
@@ -1020,14 +1027,40 @@ SSH 키를 생성하고 GitHub 계정에 공개 키를 등록하면 `git push`, 
 ssh-keygen -t ed25519 -C "your_email@example.com"
 cat ~/.ssh/id_ed25519.pub
 ssh -T git@github.com
+git remote -v
 ```
+
+#### 명령어 의미
+
+* `ssh-keygen -t ed25519 -C "your_email@example.com"`
+
+  * `ed25519` 알고리즘 방식의 SSH 키를 생성
+  * `-C` 옵션은 키를 구분하기 위한 주석(comment) 용도로, 보통 GitHub 이메일을 넣음
+
+* `cat ~/.ssh/id_ed25519.pub`
+
+  * 생성된 **공개 키** 내용을 출력
+  * 이 값을 GitHub 계정의 SSH Key 등록 화면에 복사해서 붙여넣음
+
+* `ssh -T git@github.com`
+
+  * GitHub 서버와 SSH 인증이 정상적으로 되는지 테스트
+  * 성공하면 GitHub 사용자 계정 기준의 환영 메시지가 출력됨
+
+* `git remote -v`
+
+  * 현재 저장소에 연결된 원격 저장소 주소를 확인
+  * `https://...` 형태인지 `git@github.com:...` 형태인지 비교 가능
 
 #### 배운 점
 
-* HTTPS와 SSH는 인증 방식에서 차이가 있다.
-* SSH 키 등록은 GitHub 사용 시 반복 인증을 줄이고 원격 저장소 접근을 더 편리하게 만든다.
-* 실습 및 개인 개발 환경에서는 SSH 설정이 GitHub 연동 효율을 높여준다.
-
+* HTTPS와 SSH는 GitHub 인증 방식이 다르며, SSH는 키 기반 인증을 사용한다.
+* SSH는 비밀번호를 매번 입력하는 방식이 아니라, **내 PC의 개인 키**와 **GitHub에 등록한 공개 키**를 이용해 인증한다.
+* `id_ed25519.pub`는 공개 키이므로 GitHub에 등록하고, 개인 키는 로컬 PC에 안전하게 보관해야 한다.
+* `ssh -T`로 연결 테스트를 해보면 키 등록이 제대로 되었는지 바로 확인할 수 있다.
+* `git remote -v`로 원격 저장소 주소를 확인해야 실제 저장소가 HTTPS로 연결되어 있는지, SSH로 연결되어 있는지 판단할 수 있다.
+* 원격 저장소가 HTTPS 주소로 되어 있으면 SSH 키를 등록해도 바로 적용되지 않으므로, 필요하면 원격 주소를 SSH 형식으로 변경해야 한다.
+* 개인 개발 환경이나 실습 환경에서는 SSH 설정을 해두면 `git push`, `git pull` 작업이 훨씬 편리해진다.
 
 ### 6-12. Git / GitHub / VSCode 연동
 
@@ -1194,9 +1227,65 @@ Docker 문제는 한꺼번에 보지 말고
 **태그 → 포트 → 볼륨/마운트 → 검증 명령** 순서로 나눠서 확인해야 한다.
 이번 실습을 통해 명령어 자체를 외우는 것보다, 각 옵션이 어떤 층위의 설정인지 구분하는 것이 더 중요하다는 점을 배웠다.
 
+
+### 8-3. 문제 3: GitHub SSH 원격 저장소 설정 혼동
+
+GitHub SSH 인증까지는 성공했지만, 이후 `git remote` 설정 과정에서 원격 저장소가 연결되지 않아 `git push`가 바로 되지 않는 문제가 있었다.
+
+#### 원인
+
+로컬 SSH 키 생성과 GitHub 계정에 공개키 등록은 완료되었지만,
+현재 작업 중인 Git 저장소에 원격 저장소 `origin`이 아직 없거나, 잘못된 상태로 등록되어 있었다.
+즉, **SSH 인증 성공**과 **Git 원격 저장소 연결 완료**는 별개의 단계인데, 처음에는 이를 같은 과정으로 혼동했다.
+
+#### 실제로 겪은 혼란
+
+* `ssh -T git@github.com` 결과에서 `You've successfully authenticated` 메시지가 나와서 바로 `git push`가 될 것이라고 생각했다.
+* 하지만 `git remote -v` 결과가 비어 있었고, `git remote set-url origin ...` 실행 시 `No such remote 'origin'` 오류가 발생했다.
+* 이후 다시 `git remote add origin ...`을 실행했을 때는 `remote origin already exists` 오류가 발생해, 원격 저장소 설정이 꼬인 상태임을 확인했다.
+* 또한 Git 명령은 **현재 Git 저장소 폴더 기준**으로 동작하므로, 올바른 프로젝트 폴더 안에서 실행하는 것이 중요하다는 점도 다시 확인했다.
+
+#### 확인
+
+```bash
+pwd
+ls -la
+git status
+git remote -v
+```
+
+* `pwd`: 현재 작업 중인 디렉토리 확인
+* `ls -la`: `.git` 디렉토리 존재 여부 확인
+* `git status`: 현재 폴더가 Git 저장소인지 확인
+* `git remote -v`: 원격 저장소 등록 상태 확인
+
+#### 해결
+
+```bash
+git remote remove origin
+git remote add origin git@github.com:stnguswnd/ia-codyssey.git
+git remote -v
+git push -u origin main
+```
+
+1. 먼저 현재 폴더가 실제 Git 저장소인지 확인했다.
+2. `git remote -v`로 `origin` 상태를 확인했다.
+3. 원격 저장소 설정이 꼬인 경우 `git remote remove origin`으로 기존 설정을 삭제했다.
+4. 이후 SSH 주소로 `origin`을 다시 등록했다.
+5. 마지막으로 `git push -u origin main`으로 원격 저장소와 브랜치를 연결했다.
+
+#### 배운 점
+
+GitHub SSH 연결 성공은 **인증 준비가 끝난 것**일 뿐,
+실제로 `git push`를 하려면 **현재 Git 저장소 폴더**, **원격 저장소(origin) 등록**, **브랜치 연결**까지 별도로 확인해야 한다.
+특히 문제 발생 시에는 **SSH 인증 → 현재 폴더 → remote 설정 → push** 순서로 단계별로 점검하는 것이 중요하다는 점을 배웠다.
+
 ---
 
-### 8-3. 심층 인터뷰 문항 1: 포트 충돌 진단 순서
+
+
+### 8-4. 
+### 심층 인터뷰 문항 1: 포트 충돌 진단 순서
 
 포트 충돌이 발생했을 때는 아래 순서로 진단하는 것이 가장 빠르다.
 
