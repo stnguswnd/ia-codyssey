@@ -2,8 +2,13 @@
 
 ## 1. 프로젝트 개요
 
-이번 과제에서는 iMac(macOS) 환경에서 OrbStack을 실행한 뒤, 터미널(CLI) 기반으로 개발 워크스테이션을 구성함. 
-터미널 기본 조작, 권한 변경 실습, Docker 설치/점검, 컨테이너 실행, Dockerfile 기반 커스텀 웹 서버 구축, 포트 매핑 검증, bind mount 반영 확인, volume 영속성 검증, Git/GitHub/VSCode 연동까지 수행했다.
+## 1. 프로젝트 개요
+
+## 1. 프로젝트 개요
+
+이번 과제에서는 iMac(macOS) 환경에서 OrbStack을 실행한 뒤, 터미널(CLI) 기반으로 개발 워크스테이션을 구성했다.  
+터미널 기본 조작, 권한 변경 실습, Docker 설치/점검, 컨테이너 실행, Dockerfile 기반 커스텀 웹 서버 구축, 포트 매핑 검증, bind mount 반영 확인, volume 영속성 검증, Git/GitHub/VSCode 연동까지 수행했다.  
+추가로 보너스 과제로 Docker Compose의 기본 구조와 단일/멀티 컨테이너 실행 방식, 운영 명령어, 환경 변수 활용, GitHub SSH 키 설정 개념까지 함께 정리했다.
 
 ---
 
@@ -73,6 +78,12 @@ ia-codyssey/
 - [x] Git 사용자 설정 및 GitHub/VSCode 연동
 - [x] 트러블슈팅 정리
 - [x] 민감정보 마스킹 확인
+- [x] Docker Compose 기본 구조 확인
+- [x] Docker Compose 단일 서비스 실행 방식 정리
+- [x] Docker Compose 멀티 컨테이너 개념 확인
+- [x] Docker Compose 운영 명령어 정리 (`up`, `down`, `ps`, `logs`)
+- [x] 환경 변수 활용 방식 정리
+- [x] GitHub SSH 키 설정 개념 확인
 
 ---
 
@@ -828,7 +839,197 @@ hi
 
 ---
 
-### 6-11. Git / GitHub / VSCode 연동
+###
+### 6-11. 보너스 과제 (선택)
+
+````md
+### 6-11. 보너스 과제 (선택)
+
+#### 6-11-1. Docker Compose 기초
+
+Docker Compose는 여러 컨테이너의 실행 설정을 `compose.yaml` 파일에 선언하고,
+`docker compose up` 명령으로 한 번에 실행·관리할 수 있게 해주는 도구다.
+반복적으로 길게 입력하던 `docker run` 명령을 파일로 관리할 수 있어, 재현성과 관리성이 높아진다.
+
+이번 실습에서는 **COPY 방식 이미지 실행용 서비스**와 **Bind Mount 방식 실시간 반영 서비스**를 각각 Compose로 구성했다.
+
+#### 파일 내용 (`compose.yaml`)
+
+```yaml
+services:
+  web-copy:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: codyssey-week1-web:1.0
+    ports:
+      - "8080:80"
+
+  web-bind:
+    build:
+      context: .
+      dockerfile: Dockerfile.bind
+    image: codyssey-week1-bind:1.0
+    ports:
+      - "${HOST_PORT}:80"
+    volumes:
+      - ./app-bind:/usr/share/nginx/html
+```
+
+#### 정리
+
+* `web-copy`: Dockerfile 기반으로 이미지를 빌드하고, 호스트 `8080`을 컨테이너 `80`에 매핑
+* `web-bind`: `Dockerfile.bind` 기반으로 이미지를 빌드하고, 환경변수 `HOST_PORT`를 통해 포트 설정
+* `./app-bind` 디렉토리를 컨테이너 웹 루트에 bind mount 하여 파일 수정 사항이 즉시 반영되도록 구성
+
+#### 배운 점
+
+* 단일 컨테이너라도 실행 설정을 파일로 관리하면 반복 실행이 쉬워진다.
+* `docker run` 명령을 직접 기억하는 방식보다 설정 파일 기반 관리가 더 재현 가능하다.
+
+---
+
+#### 6-11-2. Compose로 COPY 방식과 Bind Mount 방식 분리
+
+이번 Compose 파일은 단순히 여러 컨테이너를 띄우는 것보다,
+**정적 파일을 이미지에 포함하는 방식**과 **호스트 파일을 실시간 연결하는 방식**을 비교할 수 있도록 구성했다.
+
+#### 구성 의도
+
+* `web-copy`
+
+  * `COPY app/ /usr/share/nginx/html/` 방식
+  * 이미지 빌드 시점의 정적 파일이 컨테이너에 포함됨
+  * 파일을 수정하면 다시 `docker build`가 필요함
+
+* `web-bind`
+
+  * `volumes: - ./app-bind:/usr/share/nginx/html` 방식
+  * 호스트 디렉토리를 컨테이너에 직접 연결
+  * 파일 수정 사항이 즉시 반영됨
+  * 개발 및 실시간 확인에 적합함
+
+#### 배운 점
+
+* COPY 방식은 **배포용 이미지 고정**에 적합하다.
+* Bind Mount 방식은 **개발 중 빠른 수정·확인**에 적합하다.
+* 같은 nginx 기반 서비스라도 파일 반영 방식에 따라 운영 목적이 달라질 수 있음을 확인했다.
+
+---
+
+#### 6-11-3. Compose 실행 및 운영 명령어
+
+Compose에서는 다음 명령으로 전체 서비스를 한 번에 실행, 확인, 종료할 수 있다.
+
+#### 실행 명령
+
+```bash
+docker compose up -d
+docker compose ps
+docker compose logs
+docker compose down
+```
+
+#### 명령 의미
+
+* `docker compose up -d`
+
+  * `compose.yaml`에 정의된 서비스를 백그라운드에서 실행
+* `docker compose ps`
+
+  * Compose 프로젝트에 포함된 컨테이너 상태 확인
+* `docker compose logs`
+
+  * 각 서비스 로그 확인
+* `docker compose down`
+
+  * Compose로 생성한 컨테이너, 네트워크 등을 정리하며 종료
+
+#### 배운 점
+
+* `docker run`, `docker stop`, `docker rm`을 각각 수행하던 흐름을 하나의 프로젝트 단위로 관리할 수 있다.
+* 운영 관점에서 `up → ps → logs → down` 흐름을 익혀두면 멀티 컨테이너 환경을 더 체계적으로 다룰 수 있다.
+
+---
+
+#### 6-11-4. 환경 변수 활용
+
+Compose에서는 포트, 모드, 경로 등 변경 가능성이 높은 설정값을 환경 변수로 분리할 수 있다.
+이번 실습에서는 `web-bind` 서비스의 호스트 포트를 환경 변수로 분리했다.
+
+#### Compose 설정 일부
+
+```yaml
+ports:
+  - "${HOST_PORT}:80"
+```
+
+#### 환경 변수 파일 예시 (`.env`)
+
+```env
+HOST_PORT=8081
+```
+
+#### 적용 의미
+
+* 컨테이너 내부 포트 `80`은 그대로 유지
+* 호스트 포트만 `.env`에서 변경 가능
+* 예를 들어 `HOST_PORT=8081`, `HOST_PORT=8082`처럼 상황에 맞게 쉽게 조정 가능
+
+#### 배운 점
+
+* 환경 변수는 코드와 설정을 분리하는 기본 방법이다.
+* 같은 Compose 파일을 유지하면서도 실행 환경에 따라 다른 포트를 적용할 수 있어 유연하다.
+* 포트 충돌이 발생할 때도 Compose 파일을 직접 수정하지 않고 `.env`만 바꿔 대응할 수 있다.
+
+---
+
+#### 6-11-5. Compose 기반 실행 구조 정리
+
+이번 Compose 파일은 아래 두 가지 실행 방식을 비교하기 쉽게 구성했다.
+
+| 서비스        | 목적             | 파일 반영 방식        | 포트                |
+| ---------- | -------------- | --------------- | ----------------- |
+| `web-copy` | 배포형 정적 웹 서버 검증 | 이미지 빌드 시 `COPY` | `8080:80`         |
+| `web-bind` | 개발형 실시간 반영 검증  | `Bind Mount`    | `${HOST_PORT}:80` |
+
+#### 설계 기준
+
+* **배포/고정 결과 확인**이 목적일 때는 `web-copy`
+* **파일 수정 후 즉시 반영 확인**이 목적일 때는 `web-bind`
+
+즉, 이번 Compose 구성은 단순 실행 자동화가 아니라
+**이미지 기반 배포 방식과 로컬 개발 방식의 차이**를 한 파일 안에서 비교 가능하게 만드는 것을 목표로 했다.
+
+#### 배운 점
+
+* Compose는 여러 컨테이너를 띄우는 도구이기도 하지만,
+  서로 다른 실행 전략을 문서화하는 도구로도 활용할 수 있다.
+* 서비스 목적에 따라 `build`, `ports`, `volumes`, `.env`를 어떻게 조합할지 설계하는 것이 중요하다.
+
+---
+
+#### 6-11-6. GitHub SSH 키 설정
+
+GitHub에 HTTPS 대신 SSH 방식으로 접근하면 인증 정보를 반복 입력하지 않고 원격 저장소를 사용할 수 있다.
+SSH 키를 생성하고 GitHub 계정에 공개 키를 등록하면 `git push`, `git pull`을 보다 편리하게 수행할 수 있다.
+
+#### 관련 명령 예시
+
+```bash
+ssh-keygen -t ed25519 -C "your_email@example.com"
+cat ~/.ssh/id_ed25519.pub
+ssh -T git@github.com
+```
+
+#### 배운 점
+
+* HTTPS와 SSH는 인증 방식에서 차이가 있다.
+* SSH 키 등록은 GitHub 사용 시 반복 인증을 줄이고 원격 저장소 접근을 더 편리하게 만든다.
+* 실습 및 개인 개발 환경에서는 SSH 설정이 GitHub 연동 효율을 높여준다.
+
+
+### 6-12. Git / GitHub / VSCode 연동
 
 #### 실행 명령
 

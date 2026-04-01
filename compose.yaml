@@ -1,0 +1,18 @@
+services:
+  web-copy:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: codyssey-week1-web:1.0
+    ports:
+      - "8080:80"
+
+  web-bind:
+    build:
+      context: .
+      dockerfile: Dockerfile.bind
+    image: codyssey-week1-bind:1.0
+    ports:
+      - "${HOST_PORT}:80"
+    volumes:
+      - ./app-bind:/usr/share/nginx/html
