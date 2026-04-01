@@ -1,8 +1,5 @@
 # Codyssey 1주차 - AI/SW 개발 워크스테이션 구축
 
-## 1. 프로젝트 개요
-
-## 1. 프로젝트 개요
 
 ## 1. 프로젝트 개요
 
@@ -298,7 +295,7 @@ mkdir practice
 cd practice
 
 touch a.txt
-echo "hello codyssey" > a.txt
+echo "hello codyssey" > a.txt. (프롬프트 상에서 실행되는 것을 a.txt 안에 매핑)
 cat a.txt
 
 mkdir dir1
@@ -307,6 +304,10 @@ mv a.txt b.txt
 mv b.txt dir1/c.txt
 
 ls -la
+ls = 목록 보기 (list)
+-l = 자세한 정보 (long format)
+-a = 숨김 파일까지 포함 (all)
+
 cd ..
 rm -r practice    (r은 recursive로 폴더 안을 모두 삭제)
 ```
@@ -369,13 +370,11 @@ guswnd0432389@c3r4s3 codyssey-week1 % rm -r practice
 #### 실행 명령
 
 ```bash
-touch perm.txt
 mkdir permdir
 
-ls -l
 ls -ld permdir
+ls -l
 
-chmod 644 perm.txt
 chmod 755 permdir
 
 ls -l
@@ -457,6 +456,7 @@ docker run --name log-test alpine sh -c "echo hello from container"
 docker logs log-test
 
 docker run -d --name stat-test nginx:alpine
+- 동작 순서 로컬에 이미지가 있다면 사용, 없다면 도커 허브에서 자동 다운로드, 다운로드 후 컨테이너 실행
 docker ps
 docker stats --no-stream
 docker rm -f stat-test
@@ -555,17 +555,8 @@ b3c6c996db6c   stat-test     0.00%     13.78MiB / 15.67GiB   0.09%     830B / 12
 #### 실행 명령
 
 ```bash
-docker run -it --name ubuntu-test ubuntu bash
-```
-
-컨테이너 내부에서:
-
-```bash
-ls
-pwd
-echo "inside container" > /tmp/hello.txt
-cat /tmp/hello.txt
-exit
+docker run -it --name ubuntu-test ubuntu bash  
+it는 컨테이너를 터미널 처럼 직접 조작할 수 있게 해주는 옵션 
 ```
 
 #### 실행 결과
@@ -588,6 +579,103 @@ Status: Downloaded newer image for ubuntu:latest
 - 컨테이너 안에서 생성한 `/tmp/hello.txt` 는 호스트에 자동으로 나타나지 않는다.
 
 ---
+
+
+
+## Docker `run`을 할 때 `-it`, `bash`, `sh` 차이
+
+Docker에서 아래 요소들은 서로 역할이 다르다.
+
+* `-it` : **실행 옵션**
+* `bash` : **컨테이너 안에서 실행할 셸 프로그램**
+* `sh` : **컨테이너 안에서 실행할 더 기본적인 셸 프로그램**
+
+즉, `-it`는 Docker가 컨테이너를 **어떻게 실행할지**에 대한 옵션이고,
+`bash`와 `sh`는 컨테이너 안에서 **무슨 셸을 띄울지**에 대한 차이라고 보면 된다.
+
+### 비교 표
+
+| 항목    | `-it`                        | `bash`                         | `sh`                       |
+| ----- | ---------------------------- | ------------------------------ | -------------------------- |
+| 분류    | Docker 실행 옵션                 | 셸 프로그램                         | 셸 프로그램                     |
+| 역할    | 컨테이너를 터미널처럼 상호작용 가능하게 실행     | 비교적 기능이 많은 셸 실행                | 더 기본적이고 가벼운 셸 실행           |
+| 포함 의미 | `-i` + `-t`                  | 명령어                            | 명령어                        |
+| 세부 의미 | `-i`: 입력 유지, `-t`: 터미널 할당    | Bash 셸 실행                      | Sh 셸 실행                    |
+| 언제 사용 | 컨테이너 안에 직접 들어가 명령어를 입력할 때    | Ubuntu 등 Bash가 포함된 이미지에서 주로 사용 | Alpine 등 경량 이미지에서 주로 사용    |
+| 없으면   | 입력이 어렵거나 바로 종료될 수 있음         | 해당 셸이 없으면 실행 실패                | 해당 셸이 없으면 실행 실패            |
+| 예시    | `docker run -it ubuntu bash` | `docker run -it ubuntu bash`   | `docker run -it alpine sh` |
+
+### `-it` 자세히
+
+| 옵션    | 의미                                    |
+| ----- | ------------------------------------- |
+| `-i`  | 표준 입력을 열어둠. 명령어를 계속 입력할 수 있게 함        |
+| `-t`  | 터미널(TTY)을 할당함. 우리가 보는 터미널 화면처럼 동작하게 함 |
+| `-it` | 둘을 함께 사용하여 컨테이너를 터미널처럼 조작 가능하게 만듦     |
+
+### `bash`와 `sh` 차이
+
+| 항목        | `bash`               | `sh`                          |
+| --------- | -------------------- | ----------------------------- |
+| 기능        | 상대적으로 많음             | 기본 기능 위주                      |
+| 사용성       | 명령어 기능이 더 풍부함        | 단순하고 가벼움                      |
+| 이미지 포함 여부 | Ubuntu 같은 이미지에 자주 포함 | 대부분의 리눅스 계열 이미지에 기본적으로 존재하는 편 |
+| 경량 이미지 지원 | Alpine에는 없는 경우가 많음   | Alpine에서 자주 사용                |
+
+### 예시로 보면
+
+```bash
+docker run -it ubuntu bash
+```
+
+의미:
+
+* Ubuntu 이미지로 컨테이너 실행
+* `-it` 옵션으로 터미널처럼 접속 가능하게 설정
+* 컨테이너 안에서 `bash` 셸 실행
+
+```bash
+docker run -it alpine sh
+```
+
+의미:
+
+* Alpine 이미지로 컨테이너 실행
+* `-it` 옵션으로 터미널처럼 접속 가능하게 설정
+* 컨테이너 안에서 `sh` 셸 실행
+
+### 왜 이미지마다 다르게 쓰는가
+
+* `ubuntu` 이미지는 보통 `bash`가 포함되어 있어서 `bash` 실행 가능
+* `alpine` 이미지는 매우 가벼운 이미지라 `bash`가 없는 경우가 많아 `sh`를 주로 사용
+
+예를 들어 Alpine에서 아래처럼 실행하면 실패할 수 있다.
+
+```bash
+docker run -it alpine bash
+```
+
+이유:
+
+* Alpine 이미지 안에 `bash`가 없기 때문
+
+### 한 줄 정리
+
+* `-it` = 컨테이너를 **터미널처럼 상호작용 가능하게 실행하는 옵션**
+* `bash` = 기능이 더 많은 셸
+* `sh` = 더 기본적이고 가벼운 셸
+* 따라서 `docker run`에서는 **옵션(`-it`)** 과 **실행할 셸(`bash`, `sh`)** 을 구분해서 이해해야 한다.
+
+
+컨테이너 내부에서:
+
+```bash
+ls
+pwd
+echo "inside container" > /tmp/hello.txt
+cat /tmp/hello.txt
+exit
+```
 
 ### 6-7. Dockerfile 기반 커스텀 웹 서버
 
@@ -984,7 +1072,7 @@ HOST_PORT=8081
 
 이번 Compose 파일은 아래 두 가지 실행 방식을 비교하기 쉽게 구성했다.
 
-| 서비스        | 목적             | 파일 반영 방식        | 포트                |
+| 서비스명        | 목적             | 파일 반영 방식        | 포트                |
 | ---------- | -------------- | --------------- | ----------------- |
 | `web-copy` | 배포형 정적 웹 서버 검증 | 이미지 빌드 시 `COPY` | `8080:80`         |
 | `web-bind` | 개발형 실시간 반영 검증  | `Bind Mount`    | `${HOST_PORT}:80` |
@@ -1067,8 +1155,6 @@ ssh-keygen -t ed25519 -C "your_email@example.com"
 | --------- | ----------------------------------------- | -------------------------------------------- | ---------------------------------- |
 | `ed25519` | 짧은 키 길이 대비 높은 보안성, 생성과 인증 속도가 빠름, 설정이 간단함 | 아주 오래된 시스템에서는 지원이 제한될 수 있음                   | 일반적인 개인 개발 환경, GitHub SSH 설정 권장 방식 |
 | `RSA`     | 호환성이 매우 넓고 오래된 시스템에서도 많이 지원됨              | 같은 보안 수준을 위해 더 긴 키가 필요하고, 상대적으로 무겁고 느릴 수 있음  | 구형 서버, 레거시 환경, 호환성이 중요한 경우         |
-| `ECDSA`   | RSA보다 짧은 키로 효율적인 보안 제공, 성능이 괜찮음           | 구현/환경에 따라 선호도가 갈리고, 보통 ed25519보다 우선 추천되지는 않음 | 특정 시스템 요구사항이 있는 경우                 |
-| `DSA`     | 과거에는 사용된 적이 있음                            | 현재는 보안성과 활용성 측면에서 거의 권장되지 않음                 | 사실상 사용하지 않음                        |
 
 정리하면, **일반적인 GitHub 실습 및 개인 개발 환경에서는 `ed25519`를 우선 고려**하고,
 **호환성이 가장 중요할 때는 `RSA`를 고려**하는 방식으로 이해하면 된다.
